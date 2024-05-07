@@ -1,0 +1,12 @@
+#book-page {
+    margin: 50px 100px;
+}
+
+#roomName {
+    width: 200px;
+}
+
+#view-room,
+#rooms-detail {
+    margin: 50px 50px;
+}
