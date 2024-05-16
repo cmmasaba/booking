@@ -58,6 +58,11 @@
                         </ul>
                     </header>
                     <section id="list-of-rooms" hidden="false">
+                        {% if errors %}
+                            <ul>
+                                <li class="alert alert-danger">{{ errors }}</li>
+                            </ul>
+                        {% endif %}
                         <h3>Available rooms:</h3>
 
                         <ul>
