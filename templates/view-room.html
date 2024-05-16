@@ -9,7 +9,7 @@
     </head>
     <body>
         <main id="main-box">
-            <section id="rooms-details" style="margin-top: 30px;">
+            <header>
                 <nav class="nav" style="margin-bottom: 20px;">
                     <a class="nav-link" href="/">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-house-fill" viewBox="0 0 16 16">
@@ -18,6 +18,8 @@
                         </svg>
                     </a>
                 </nav>
+            </header>
+            <section id="rooms-details" style="margin-top: 30px;">
                 {% for item in room %}
                     <h3>{{ item.get("name") }}</h3>
                     <p>Created by: {{ item.get("owner") }} on {{ item.get("date_created") }}</p>
