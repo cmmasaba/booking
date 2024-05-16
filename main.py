@@ -27,7 +27,7 @@ def getUser(user_token):
     user = firestore_db.collection('users').document(user_token['user_id'])
     if not user.get().exists:
         user_data = {
-            "name": '',
+            "username": '',
             "rooms_list": []
         }
         firestore_db.collection('users').document(user_token['user_id']).set(user_data)
@@ -101,16 +101,17 @@ async def setUsername(request: Request):
     """
     id_token = request.cookies.get("token")
     user_token = None
+    errors = ''
 
     user_token = validateFirebaseToken(id_token)
 
     form = await request.form()
 
-    user_exists = firestore_db.collection("User").where(filter=FieldFilter('username', '==', form['username'])).get()
+    user_exists = firestore_db.collection("users").where(filter=FieldFilter('username', '==', form['username'])).get()
     if user_exists:
-        errors = ['This username is already taken.']
+        errors = 'This username is already taken.'
         return templates.TemplateResponse('set-username.html', {"request": request, "user_token": None, "errors": errors, "user_info": None,})
-    firestore_db.collection('User').document(user_token['user_id']).update({"username": form["username"]})
+    firestore_db.collection('users').document(user_token['user_id']).update({"username": form["username"]})
     return RedirectResponse("/", status_code=status.HTTP_302_FOUND)
 
 @app.post("/add-room", response_class=RedirectResponse)
