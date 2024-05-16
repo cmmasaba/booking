@@ -265,7 +265,7 @@ async def bookRoom(request: Request):
         for booking in day.get().get("bookings"):
             if form["bookingEndTime"] > booking["from"] and form["bookingStartTime"] < booking["to"]:
                 rooms_list = [room.get("name") for room in rooms]
-                errors = "The room is already booked in this time slot."
+                errors = f"The room is already booked in this time slot: {booking['name']}, {booking['date']}, {booking['room']}, from {booking['from']} to {booking['to']}"
                 return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
 
             room_booking = {
@@ -296,9 +296,7 @@ async def viewAllRoomsBookings(request: Request):
         return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
 
     user = getUser(user_token).get()
-    rooms = []
-    for room in firestore_db.collection('rooms').stream():
-        rooms.append(room)
+    rooms = firestore_db.collection('rooms').stream()
 
     bookings_list = []
     for day in firestore_db.collection("days").stream():
@@ -309,7 +307,7 @@ async def viewAllRoomsBookings(request: Request):
 
 @app.post('/view-one-room-bookings')
 async def viewOneRoomBookings(request: Request):
-    """Show all the bookings the user has made on all the rooms."""
+    """Show all the bookings the user has made on one the rooms."""
     id_token = request.cookies.get("token")
     user_token = None
     user = None
@@ -324,9 +322,7 @@ async def viewOneRoomBookings(request: Request):
     form = await request.form()
 
     user = getUser(user_token).get()
-    rooms = []
-    for room in firestore_db.collection('rooms').stream():
-        rooms.append(room)
+    rooms = firestore_db.collection('rooms').stream()
 
     bookings_list = []
     for day in firestore_db.collection("days").stream():
@@ -351,15 +347,18 @@ async def deleteBooking(request: Request):
     # get form data from the html page
     form = await request.form()
 
-    for room in firestore_db.collection('rooms').stream():
-        if room.get('name') == form['room']:
-            for day in room.get('days'):
-                if day.get().get('date') == form['date']:
-                    bookings = day.get().get('bookings')
-                    for index, value in enumerate(bookings):
-                        if value.get("from") == form['from'] and value.get("to") == form['to']:
-                            del bookings[index]
-                    day.update({'bookings': bookings})
+    try:
+        *_, room = firestore_db.collection('rooms').where(filter=FieldFilter('name', '==', form['room'])).get()
+    except ValueError:
+        pass
+
+    for day in room.get('days'):
+        if day.get().get('date') == form['date']:
+            bookings = day.get().get('bookings')
+            for index, value in enumerate(bookings):
+                if value.get("from") == form['from'] and value.get("to") == form['to']:
+                    del bookings[index]
+            day.update({'bookings': bookings})
 
     return RedirectResponse('/', status.HTTP_302_FOUND)
 
@@ -387,27 +386,24 @@ async def editBooking(request: Request, booking_room: str, date: str, start: str
 
     user = getUser(user_token).get()
 
-    rooms_list = []
-    for room in firestore_db.collection("rooms").stream():
-        rooms_list.append(room.get("name"))
+    rooms_list = firestore_db.collection("rooms").stream()
 
-    for room in firestore_db.collection("rooms").stream():
-        if room.get('name') == booking_room:
-            for day in room.get('days'):
-                if day.get().get('date') == date:
-                    bookings = day.get().get('bookings')
-                    for index, value in enumerate(bookings):
-                        if value.get("from") == start and value.get("to") == end:
-                            booking = {
-                                'event': bookings[index].get('name'),
-                                'date': bookings[index].get('date'),
-                                'room': bookings[index].get('room'),
-                                'from': bookings[index].get('from'),
-                                'to': bookings[index].get('to')
-                            }
-                            del bookings[index]
-                            day.update({'bookings': bookings})
-                            return templates.TemplateResponse('edit-booking.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "booking": booking, "rooms_list": rooms_list})
+    *_, room = firestore_db.collection("rooms").where(filter=FieldFilter('name', '==', booking_room)).get()
+    for day in room.get('days'):
+        if day.get().get('date') == date:
+            bookings = day.get().get('bookings')
+            for index, value in enumerate(bookings):
+                if value.get("from") == start and value.get("to") == end:
+                    booking = {
+                        'event': bookings[index].get('name'),
+                        'date': bookings[index].get('date'),
+                        'room': bookings[index].get('room'),
+                        'from': bookings[index].get('from'),
+                        'to': bookings[index].get('to')
+                    }
+                    del bookings[index]
+                    day.update({'bookings': bookings})
+                    return templates.TemplateResponse('edit-booking.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "booking": booking, "rooms_list": rooms_list})
 
 @app.post('/edit-booking')
 async def editBooking(request: Request):
@@ -446,18 +442,18 @@ async def editBooking(request: Request):
 
     user = getUser(user_token).get()
 
-    room_query = None
-    for room in rooms:
-        if room.get("name") == form["roomName"]:
-            room_query = room
+    try:
+        *_, room_query = firestore_db.collection("rooms").where(filter=FieldFilter('name', '==', form['roomName'])).get()
+    except ValueError:
+        rooms_list = [room.get("name") for room in rooms]
+        errors = "The selected room is no longer available"
+        return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
+
     # validation for day and bookings
-    days = []
-    for day in room_query.get('days'):
-        """Get the days assosiated with the room."""
-        days.append(day.get().get('date'))
+    dates = [day.get().get('date') for day in room_query.get('days')]
 
     transaction = firestore_db.transaction()
-    if form["bookingDate"] not in days:
+    if form["bookingDate"] not in dates:
         days_ref = firestore_db.collection('days').document()
         room_booking = {
             'name': form['eventName'],
@@ -474,23 +470,25 @@ async def editBooking(request: Request):
         room_ref = room_query.reference
         room_ref.update({'days': days_list})
     else:
-        for day in room_query.get("days"):
-            if day.get().get("date") == form["bookingDate"]:
-                for booking in day.get().get("bookings"):
-                    if form["bookingEndTime"] > booking["from"] and form["bookingStartTime"] < booking["to"]:
-                        raise HTTPException(status_code=400, detail=f"The room is already booked in this time slot: "
-                                            f"{booking['name']}, {booking['date']}, {booking['room']}, from {booking['from']} to {booking['to']}")
-                room_booking = {
-                    'name': form['eventName'],
-                    'date': form['bookingDate'],
-                    'room': form['roomName'],
-                    'from': form['bookingStartTime'],
-                    'to': form['bookingEndTime'],
-                    'user': user.id
-                }
-                bookings_list = day.get().get('bookings')
-                bookings_list.append(room_booking)
-                day.update({"bookings": bookings_list})
+        days = room_query.get("days")
+        day = days[dates.index(form['bookingDate'])]
+        for booking in day.get().get("bookings"):
+            if form["bookingEndTime"] > booking["from"] and form["bookingStartTime"] < booking["to"]:
+                rooms_list = [room.get("name") for room in rooms]
+                errors = f"The room is already booked in this time slot: {booking['name']}, {booking['date']}, {booking['room']}, from {booking['from']} to {booking['to']}"
+                return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
+
+        room_booking = {
+            'name': form['eventName'],
+            'date': form['bookingDate'],
+            'room': form['roomName'],
+            'from': form['bookingStartTime'],
+            'to': form['bookingEndTime'],
+            'user': user.id
+        }
+        bookings_list = day.get().get('bookings')
+        bookings_list.append(room_booking)
+        day.update({"bookings": bookings_list})
     return RedirectResponse('/', status.HTTP_302_FOUND)
 
 @app.post('/delete-room')
@@ -499,12 +497,13 @@ async def deleteRoom(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
+    errors = ''
 
     user_token = validateFirebaseToken(id_token)
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": None, "user_info": None})
     
     # get form data from the html page
     form = await request.form()
@@ -522,7 +521,9 @@ async def deleteRoom(request: Request):
                 for day_index, day in enumerate(days):
                     """Check if the room has bookings associated."""
                     if day.get().get('bookings'):
-                        raise HTTPException(status_code=400, detail="Cannot delete room with bookings.")
+                        rooms = firestore_db.collection('rooms').stream()
+                        errors = 'Cannot delete room with bookings'
+                        return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": None})
                     else:
                         days[day_index].delete()
                         del days[day_index]
@@ -531,7 +532,9 @@ async def deleteRoom(request: Request):
                 del rooms[room_index]
                 user.update({'rooms_list': rooms})
             else:
-                raise HTTPException(status_code=400, detail="Rooms can only be deleted by their owner.")
+                rooms = firestore_db.collection('rooms').stream()
+                errors = 'Rooms can only be deleted by the person who created it.'
+                return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": None})
 
     return RedirectResponse('/', status.HTTP_302_FOUND)
 
@@ -553,14 +556,11 @@ async def filterByDay(request: Request):
 
     user = getUser(user_token)
     bookings = []
-    days = firestore_db.collection('days').where(filter=FieldFilter('date', '==', form['filterDate'])).stream()
-    for day in days:
+    for day in firestore_db.collection('days').where(filter=FieldFilter('date', '==', form['filterDate'])).stream():
         for booking in day.get("bookings"):
             bookings.append(booking)
 
-    rooms = []
-    for room in firestore_db.collection('rooms').stream():
-        rooms.append(room)
+    rooms = firestore_db.collection('rooms').stream()
     return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": bookings})
 
 @app.get("/view-room/{room}", response_class=RedirectResponse)
@@ -581,11 +581,16 @@ async def viewRoom(request: Request, room: str):
 
     user = getUser(user_token)
     bookings = []
-    room_query = firestore_db.collection('rooms').where(filter=FieldFilter('name', '==', room)).get()
-    for room in room_query:
-        for day in room.get("days"):
-            if day.get().get("bookings"):
-                '''Only add to bookings if the list of bookings associated with this day is not empty.'''
-                bookings.append({day.get().get('date'): [item for item in day.get().get("bookings")]})
+    try:
+        *_, room_query = firestore_db.collection('rooms').where(filter=FieldFilter('name', '==', room)).get()
+    except ValueError:
+        rooms = firestore_db.collection('rooms').stream()
+        errors = 'The selected room is no longer available.'
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": None})
+
+    for day in room_query.get("days"):
+        if day.get().get("bookings"):
+            '''Only add to bookings if the list of bookings associated with this day is not empty.'''
+            bookings.append({day.get().get('date'): [item for item in day.get().get("bookings")]})
 
     return templates.TemplateResponse('view-room.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "room": room_query, "bookings": bookings})
