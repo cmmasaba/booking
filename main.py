@@ -422,20 +422,27 @@ async def editBooking(request: Request):
     # get form data from the html page
     form = await request.form()
 
+    rooms = firestore_db.collection("rooms").stream()
+
     if form["bookingStartTime"] >= form["bookingEndTime"]:
-        raise HTTPException(status_code=400 ,detail="Invalid start and end time selected")
+        rooms_list = [room.get("name") for room in rooms]
+        errors = "Invalid start and end time selected"
+        return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
     
     if datetime.date.fromisoformat(form['bookingDate']) < datetime.date.today():
-        raise HTTPException(status_code=400, detail="Select a present or future date")
+        rooms_list = [room.get("name") for room in rooms]
+        errors = "Select a present or future date"
+        return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})  
     
     if datetime.date.fromisoformat(form['bookingDate']) == datetime.date.today():
         '''If booking date is today and booking time is past'''
         if datetime.time.fromisoformat(form['bookingStartTime']) < datetime.time.fromisoformat(datetime.datetime.now().time().isoformat(timespec='minutes')):
-            raise HTTPException(status_code=400, detail="Select a valid time")
+            rooms_list = [room.get("name") for room in rooms]
+            errors = "Select a valid time"
+            return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
 
     user = getUser(user_token).get()
 
-    rooms = firestore_db.collection("rooms").stream()
     room_query = None
     for room in rooms:
         if room.get("name") == form["roomName"]:
