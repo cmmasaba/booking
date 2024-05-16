@@ -72,7 +72,7 @@ async def root(request: Request):
 async def setUsername(request: Request):
     """Route (GET) for setting the username when a user logs in for the first time."""
     id_token = request.cookies.get("token")
-    error_message = "No error here"
+    errors = ""
     user_token = None
     user = None
 
@@ -80,14 +80,14 @@ async def setUsername(request: Request):
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": None, "user_info": None})
     
     user = getUser(user_token).get()
 
     context_dict = dict(
         request=request,
         user_token=user_token,
-        error_message=error_message,
+        errors=errors,
         user_info=user,
     )
 
@@ -111,7 +111,6 @@ async def setUsername(request: Request):
         errors = ['This username is already taken.']
         return templates.TemplateResponse('set-username.html', {"request": request, "user_token": None, "errors": errors, "user_info": None,})
     firestore_db.collection('User').document(user_token['user_id']).update({"username": form["username"]})
-    addDirectory(form['username'])
     return RedirectResponse("/", status_code=status.HTTP_302_FOUND)
 
 @app.post("/add-room", response_class=RedirectResponse)
