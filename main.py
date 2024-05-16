@@ -27,7 +27,7 @@ def getUser(user_token):
     user = firestore_db.collection('users').document(user_token['user_id'])
     if not user.get().exists:
         user_data = {
-            "name": user_token['email'],
+            "name": '',
             "rooms_list": []
         }
         firestore_db.collection('users').document(user_token['user_id']).set(user_data)
@@ -68,6 +68,51 @@ async def root(request: Request):
         rooms.append(room)
     return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "error_message": error_message, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None})
 
+@app.get('/set-username', response_class=HTMLResponse)
+async def setUsername(request: Request):
+    """Route (GET) for setting the username when a user logs in for the first time."""
+    id_token = request.cookies.get("token")
+    error_message = "No error here"
+    user_token = None
+    user = None
+
+    user_token = validateFirebaseToken(id_token)
+
+    # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
+    if not user_token:
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
+    
+    user = getUser(user_token).get()
+
+    context_dict = dict(
+        request=request,
+        user_token=user_token,
+        error_message=error_message,
+        user_info=user,
+    )
+
+    return templates.TemplateResponse('set-username.html', context=context_dict)
+
+@app.post('/set-username', response_class=HTMLResponse)
+async def setUsername(request: Request):
+    """Route (POST) for setting the username.
+    
+    If the username is taken, redisplay the form with the error message.
+    """
+    id_token = request.cookies.get("token")
+    user_token = None
+
+    user_token = validateFirebaseToken(id_token)
+
+    form = await request.form()
+
+    user_exists = firestore_db.collection("User").where(filter=FieldFilter('username', '==', form['username'])).get()
+    if user_exists:
+        errors = ['This username is already taken.']
+        return templates.TemplateResponse('set-username.html', {"request": request, "user_token": None, "errors": errors, "user_info": None,})
+    firestore_db.collection('User').document(user_token['user_id']).update({"username": form["username"]})
+    addDirectory(form['username'])
+    return RedirectResponse("/", status_code=status.HTTP_302_FOUND)
 
 @app.post("/add-room", response_class=RedirectResponse)
 async def addRoom(request: Request):
