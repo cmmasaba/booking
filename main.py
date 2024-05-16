@@ -210,18 +210,18 @@ async def bookRoom(request: Request):
 
     user = getUser(user_token)
 
-    room_query = None
-    for room in rooms:
-        if room.get("name") == form["roomName"]:
-            room_query = room
-    # validation for day and bookings
-    days = []
-    for day in room_query.get('days'):
-        """Get the days assosiated with the room."""
-        days.append(day.get().get('date'))
+    try:
+        *_, room_query = firestore_db.collection("rooms").where(filter=FieldFilter('name', '==', form['roomName'])).get()
+    except ValueError:
+        rooms_list = [room.get("name") for room in rooms]
+        errors = "The selected room is no longer available"
+        return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
+
+    #  get the dates associated with the room
+    dates = [day.get().get('date') for day in room_query.get('days')]
 
     transaction = firestore_db.transaction()
-    if form["bookingDate"] not in days:
+    if form["bookingDate"] not in dates:
         """The day we want to add booking for is not in the room yet.
         
         There is no validation to do for bookings since there will be no bookings.
@@ -260,12 +260,15 @@ async def bookRoom(request: Request):
         If we iterate through the days without raising an exception it means the booking is
         valid so we follow same steps as above to add it.
         """
+        days = room_query.get("days")
         for day in room_query.get("days"):
             if day.get().get("date") == form["bookingDate"]:
                 for booking in day.get().get("bookings"):
                     if form["bookingEndTime"] > booking["from"] and form["bookingStartTime"] < booking["to"]:
-                        raise HTTPException(status_code=400, detail=f"The room is already booked in this time slot: "
-                                            f"{booking['name']}, {booking['date']}, {booking['room']}, from {booking['from']} to {booking['to']}")
+                        rooms_list = [room.get("name") for room in rooms]
+                        errors = "The room is already booked in this time slot."
+                        return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
+
                 room_booking = {
                     'name': form['eventName'],
                     'date': form['bookingDate'],
