@@ -322,9 +322,7 @@ async def viewOneRoomBookings(request: Request):
     form = await request.form()
 
     user = getUser(user_token).get()
-    rooms = []
-    for room in firestore_db.collection('rooms').stream():
-        rooms.append(room)
+    rooms = firestore_db.collection('rooms').stream()
 
     bookings_list = []
     for day in firestore_db.collection("days").stream():
