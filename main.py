@@ -296,9 +296,7 @@ async def viewAllRoomsBookings(request: Request):
         return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
 
     user = getUser(user_token).get()
-    rooms = []
-    for room in firestore_db.collection('rooms').stream():
-        rooms.append(room)
+    rooms = firestore_db.collection('rooms').stream()
 
     bookings_list = []
     for day in firestore_db.collection("days").stream():
@@ -309,7 +307,7 @@ async def viewAllRoomsBookings(request: Request):
 
 @app.post('/view-one-room-bookings')
 async def viewOneRoomBookings(request: Request):
-    """Show all the bookings the user has made on all the rooms."""
+    """Show all the bookings the user has made on one the rooms."""
     id_token = request.cookies.get("token")
     user_token = None
     user = None
