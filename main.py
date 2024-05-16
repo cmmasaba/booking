@@ -556,14 +556,11 @@ async def filterByDay(request: Request):
 
     user = getUser(user_token)
     bookings = []
-    days = firestore_db.collection('days').where(filter=FieldFilter('date', '==', form['filterDate'])).stream()
-    for day in days:
+    for day in firestore_db.collection('days').where(filter=FieldFilter('date', '==', form['filterDate'])).stream():
         for booking in day.get("bookings"):
             bookings.append(booking)
 
-    rooms = []
-    for room in firestore_db.collection('rooms').stream():
-        rooms.append(room)
+    rooms = firestore_db.collection('rooms').stream()
     return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": bookings})
 
 @app.get("/view-room/{room}", response_class=RedirectResponse)
@@ -584,11 +581,16 @@ async def viewRoom(request: Request, room: str):
 
     user = getUser(user_token)
     bookings = []
-    room_query = firestore_db.collection('rooms').where(filter=FieldFilter('name', '==', room)).get()
-    for room in room_query:
-        for day in room.get("days"):
-            if day.get().get("bookings"):
-                '''Only add to bookings if the list of bookings associated with this day is not empty.'''
-                bookings.append({day.get().get('date'): [item for item in day.get().get("bookings")]})
+    try:
+        *_, room_query = firestore_db.collection('rooms').where(filter=FieldFilter('name', '==', room)).get()
+    except ValueError:
+        rooms = firestore_db.collection('rooms').stream()
+        errors = 'The selected room is no longer available.'
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": None})
+
+    for day in room_query.get("days"):
+        if day.get().get("bookings"):
+            '''Only add to bookings if the list of bookings associated with this day is not empty.'''
+            bookings.append({day.get().get('date'): [item for item in day.get().get("bookings")]})
 
     return templates.TemplateResponse('view-room.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "room": room_query, "bookings": bookings})
