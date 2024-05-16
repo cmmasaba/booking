@@ -20,6 +20,12 @@
                 </div>
             </header>
             <section id="book-room" style="margin-top: 50px;">
+                {% if errors %}
+                    <ul>
+                        <li class="alert alert-danger">{{ errors }}</li>
+                    </ul>
+                {% endif %}
+
                 <h5>Make booking on room</h5>
                 <form class="row mb-3" method="post" action="{{ url_for('bookRoom') }}">
                     <div class="row mb-3">
