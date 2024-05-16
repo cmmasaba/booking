@@ -157,19 +157,20 @@ async def bookRoom(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
+    errors = ''
 
     user_token = validateFirebaseToken(id_token)
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
 
     user = getUser(user_token)
     # get the related rooms and store their names in a list
     rooms_list = []
     for room in firestore_db.collection("rooms").stream():
         rooms_list.append(room.get("name"))
-    return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "rooms_list": rooms_list})
+    return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
 
 @app.post("/book-room", response_class=RedirectResponse)
 async def bookRoom(request: Request):
@@ -177,30 +178,38 @@ async def bookRoom(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
+    errors = ''
 
     user_token = validateFirebaseToken(id_token)
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
     
     # get form data from the html page
     form = await request.form()
 
+    rooms = firestore_db.collection("rooms").stream()
+
     if form["bookingStartTime"] >= form["bookingEndTime"]:
-        raise HTTPException(status_code=400 ,detail="Invalid start and end time selected")
+        rooms_list = [room.get("name") for room in rooms]
+        errors = "Invalid start and end time selected"
+        return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
     
     if datetime.date.fromisoformat(form['bookingDate']) < datetime.date.today():
-        raise HTTPException(status_code=400, detail="Select a present or future date")
+        rooms_list = [room.get("name") for room in rooms]
+        errors = "Select a present or future date"
+        return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})  
     
     if datetime.date.fromisoformat(form['bookingDate']) == datetime.date.today():
         '''If booking date is today and booking time is past'''
         if datetime.time.fromisoformat(form['bookingStartTime']) < datetime.time.fromisoformat(datetime.datetime.now().time().isoformat(timespec='minutes')):
-            raise HTTPException(status_code=400, detail="Select a valid time")
+            rooms_list = [room.get("name") for room in rooms]
+            errors = "Select a valid time"
+            return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
 
     user = getUser(user_token)
 
-    rooms = firestore_db.collection("rooms").stream()
     room_query = None
     for room in rooms:
         if room.get("name") == form["roomName"]:
