@@ -428,12 +428,12 @@ async def editBooking(request: Request):
         rooms_list = [room.get("name") for room in rooms]
         errors = "Invalid start and end time selected"
         return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
-    
+
     if datetime.date.fromisoformat(form['bookingDate']) < datetime.date.today():
         rooms_list = [room.get("name") for room in rooms]
         errors = "Select a present or future date"
         return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})  
-    
+
     if datetime.date.fromisoformat(form['bookingDate']) == datetime.date.today():
         '''If booking date is today and booking time is past'''
         if datetime.time.fromisoformat(form['bookingStartTime']) < datetime.time.fromisoformat(datetime.datetime.now().time().isoformat(timespec='minutes')):
