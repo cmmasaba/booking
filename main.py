@@ -347,15 +347,18 @@ async def deleteBooking(request: Request):
     # get form data from the html page
     form = await request.form()
 
-    for room in firestore_db.collection('rooms').stream():
-        if room.get('name') == form['room']:
-            for day in room.get('days'):
-                if day.get().get('date') == form['date']:
-                    bookings = day.get().get('bookings')
-                    for index, value in enumerate(bookings):
-                        if value.get("from") == form['from'] and value.get("to") == form['to']:
-                            del bookings[index]
-                    day.update({'bookings': bookings})
+    try:
+        *_, room = firestore_db.collection('rooms').where(filter=FieldFilter('name', '==', form['room'])).get()
+    except ValueError:
+        pass
+
+    for day in room.get('days'):
+        if day.get().get('date') == form['date']:
+            bookings = day.get().get('bookings')
+            for index, value in enumerate(bookings):
+                if value.get("from") == form['from'] and value.get("to") == form['to']:
+                    del bookings[index]
+            day.update({'bookings': bookings})
 
     return RedirectResponse('/', status.HTTP_302_FOUND)
 
@@ -383,27 +386,24 @@ async def editBooking(request: Request, booking_room: str, date: str, start: str
 
     user = getUser(user_token).get()
 
-    rooms_list = []
-    for room in firestore_db.collection("rooms").stream():
-        rooms_list.append(room.get("name"))
+    rooms_list = firestore_db.collection("rooms").stream()
 
-    for room in firestore_db.collection("rooms").stream():
-        if room.get('name') == booking_room:
-            for day in room.get('days'):
-                if day.get().get('date') == date:
-                    bookings = day.get().get('bookings')
-                    for index, value in enumerate(bookings):
-                        if value.get("from") == start and value.get("to") == end:
-                            booking = {
-                                'event': bookings[index].get('name'),
-                                'date': bookings[index].get('date'),
-                                'room': bookings[index].get('room'),
-                                'from': bookings[index].get('from'),
-                                'to': bookings[index].get('to')
-                            }
-                            del bookings[index]
-                            day.update({'bookings': bookings})
-                            return templates.TemplateResponse('edit-booking.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "booking": booking, "rooms_list": rooms_list})
+    *_, room = firestore_db.collection("rooms").where(filter=FieldFilter('name', '==', booking_room)).get()
+    for day in room.get('days'):
+        if day.get().get('date') == date:
+            bookings = day.get().get('bookings')
+            for index, value in enumerate(bookings):
+                if value.get("from") == start and value.get("to") == end:
+                    booking = {
+                        'event': bookings[index].get('name'),
+                        'date': bookings[index].get('date'),
+                        'room': bookings[index].get('room'),
+                        'from': bookings[index].get('from'),
+                        'to': bookings[index].get('to')
+                    }
+                    del bookings[index]
+                    day.update({'bookings': bookings})
+                    return templates.TemplateResponse('edit-booking.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "booking": booking, "rooms_list": rooms_list})
 
 @app.post('/edit-booking')
 async def editBooking(request: Request):
