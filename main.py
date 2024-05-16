@@ -497,12 +497,13 @@ async def deleteRoom(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
+    errors = ''
 
     user_token = validateFirebaseToken(id_token)
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": None, "user_info": None})
     
     # get form data from the html page
     form = await request.form()
@@ -520,7 +521,9 @@ async def deleteRoom(request: Request):
                 for day_index, day in enumerate(days):
                     """Check if the room has bookings associated."""
                     if day.get().get('bookings'):
-                        raise HTTPException(status_code=400, detail="Cannot delete room with bookings.")
+                        rooms = firestore_db.collection('rooms').stream()
+                        errors = 'Cannot delete room with bookings'
+                        return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": None})
                     else:
                         days[day_index].delete()
                         del days[day_index]
@@ -529,7 +532,9 @@ async def deleteRoom(request: Request):
                 del rooms[room_index]
                 user.update({'rooms_list': rooms})
             else:
-                raise HTTPException(status_code=400, detail="Rooms can only be deleted by their owner.")
+                rooms = firestore_db.collection('rooms').stream()
+                errors = 'Rooms can only be deleted by the person who created it.'
+                return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": None})
 
     return RedirectResponse('/', status.HTTP_302_FOUND)
 
