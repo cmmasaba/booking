@@ -261,25 +261,25 @@ async def bookRoom(request: Request):
         valid so we follow same steps as above to add it.
         """
         days = room_query.get("days")
-        for day in room_query.get("days"):
-            if day.get().get("date") == form["bookingDate"]:
-                for booking in day.get().get("bookings"):
-                    if form["bookingEndTime"] > booking["from"] and form["bookingStartTime"] < booking["to"]:
-                        rooms_list = [room.get("name") for room in rooms]
-                        errors = "The room is already booked in this time slot."
-                        return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
+        day = days[dates.index(form['bookingDate'])]
+        for booking in day.get().get("bookings"):
+            if form["bookingEndTime"] > booking["from"] and form["bookingStartTime"] < booking["to"]:
+                rooms_list = [room.get("name") for room in rooms]
+                errors = "The room is already booked in this time slot."
+                return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
 
-                room_booking = {
-                    'name': form['eventName'],
-                    'date': form['bookingDate'],
-                    'room': form['roomName'],
-                    'from': form['bookingStartTime'],
-                    'to': form['bookingEndTime'],
-                    'user': user.id
-                }
-                bookings_list = day.get().get('bookings')
-                bookings_list.append(room_booking)
-                day.update({"bookings": bookings_list})
+            room_booking = {
+                'name': form['eventName'],
+                'date': form['bookingDate'],
+                'room': form['roomName'],
+                'from': form['bookingStartTime'],
+                'to': form['bookingEndTime'],
+                'user': user.id
+            }
+            bookings_list = day.get().get('bookings')
+            bookings_list.append(room_booking)
+            day.update({"bookings": bookings_list})
+        
     return RedirectResponse('/', status.HTTP_302_FOUND)
 
 @app.get('/view-all-room-bookings')
