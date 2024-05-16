@@ -474,8 +474,10 @@ async def editBooking(request: Request):
         day = days[dates.index(form['bookingDate'])]
         for booking in day.get().get("bookings"):
             if form["bookingEndTime"] > booking["from"] and form["bookingStartTime"] < booking["to"]:
-                raise HTTPException(status_code=400, detail=f"The room is already booked in this time slot: "
-                    f"{booking['name']}, {booking['date']}, {booking['room']}, from {booking['from']} to {booking['to']}")
+                rooms_list = [room.get("name") for room in rooms]
+                errors = f"The room is already booked in this time slot: {booking['name']}, {booking['date']}, {booking['room']}, from {booking['from']} to {booking['to']}"
+                return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
+
         room_booking = {
             'name': form['eventName'],
             'date': form['bookingDate'],
