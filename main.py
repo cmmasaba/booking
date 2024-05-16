@@ -265,7 +265,7 @@ async def bookRoom(request: Request):
         for booking in day.get().get("bookings"):
             if form["bookingEndTime"] > booking["from"] and form["bookingStartTime"] < booking["to"]:
                 rooms_list = [room.get("name") for room in rooms]
-                errors = "The room is already booked in this time slot."
+                errors = f"The room is already booked in this time slot: {booking['name']}, {booking['date']}, {booking['room']}, from {booking['from']} to {booking['to']}"
                 return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
 
             room_booking = {
@@ -442,18 +442,18 @@ async def editBooking(request: Request):
 
     user = getUser(user_token).get()
 
-    room_query = None
-    for room in rooms:
-        if room.get("name") == form["roomName"]:
-            room_query = room
+    try:
+        *_, room_query = firestore_db.collection("rooms").where(filter=FieldFilter('name', '==', form['roomName'])).get()
+    except ValueError:
+        rooms_list = [room.get("name") for room in rooms]
+        errors = "The selected room is no longer available"
+        return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
+
     # validation for day and bookings
-    days = []
-    for day in room_query.get('days'):
-        """Get the days assosiated with the room."""
-        days.append(day.get().get('date'))
+    dates = [day.get().get('date') for day in room_query.get('days')]
 
     transaction = firestore_db.transaction()
-    if form["bookingDate"] not in days:
+    if form["bookingDate"] not in dates:
         days_ref = firestore_db.collection('days').document()
         room_booking = {
             'name': form['eventName'],
@@ -470,23 +470,23 @@ async def editBooking(request: Request):
         room_ref = room_query.reference
         room_ref.update({'days': days_list})
     else:
-        for day in room_query.get("days"):
-            if day.get().get("date") == form["bookingDate"]:
-                for booking in day.get().get("bookings"):
-                    if form["bookingEndTime"] > booking["from"] and form["bookingStartTime"] < booking["to"]:
-                        raise HTTPException(status_code=400, detail=f"The room is already booked in this time slot: "
-                                            f"{booking['name']}, {booking['date']}, {booking['room']}, from {booking['from']} to {booking['to']}")
-                room_booking = {
-                    'name': form['eventName'],
-                    'date': form['bookingDate'],
-                    'room': form['roomName'],
-                    'from': form['bookingStartTime'],
-                    'to': form['bookingEndTime'],
-                    'user': user.id
-                }
-                bookings_list = day.get().get('bookings')
-                bookings_list.append(room_booking)
-                day.update({"bookings": bookings_list})
+        days = room_query.get("days")
+        day = days[dates.index(form['bookingDate'])]
+        for booking in day.get().get("bookings"):
+            if form["bookingEndTime"] > booking["from"] and form["bookingStartTime"] < booking["to"]:
+                raise HTTPException(status_code=400, detail=f"The room is already booked in this time slot: "
+                    f"{booking['name']}, {booking['date']}, {booking['room']}, from {booking['from']} to {booking['to']}")
+        room_booking = {
+            'name': form['eventName'],
+            'date': form['bookingDate'],
+            'room': form['roomName'],
+            'from': form['bookingStartTime'],
+            'to': form['bookingEndTime'],
+            'user': user.id
+        }
+        bookings_list = day.get().get('bookings')
+        bookings_list.append(room_booking)
+        day.update({"bookings": bookings_list})
     return RedirectResponse('/', status.HTTP_302_FOUND)
 
 @app.post('/delete-room')
