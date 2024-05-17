@@ -510,31 +510,31 @@ async def deleteRoom(request: Request):
 
     user = getUser(user_token)
 
-    rooms = user.get().get('rooms_list')
-    room_query = None
-    for room_index, room in enumerate(rooms):
-        if room.get().get("name") == form["room"]:
-            if form['user'] == user.id:
-                room_query = room
+    if form['user'] != user.id:
+        rooms = firestore_db.collection('rooms').stream()
+        errors = 'Rooms can only be deleted by the person who created it.'
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": None})
 
-                days = room_query.get().get('days')
-                for day_index, day in enumerate(days):
-                    """Check if the room has bookings associated."""
-                    if day.get().get('bookings'):
-                        rooms = firestore_db.collection('rooms').stream()
-                        errors = 'Cannot delete room with bookings'
-                        return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": None})
-                    else:
-                        days[day_index].delete()
-                        del days[day_index]
-                room_query.update({'days':[]})
-                rooms[room_index].delete()
-                del rooms[room_index]
-                user.update({'rooms_list': rooms})
-            else:
-                rooms = firestore_db.collection('rooms').stream()
-                errors = 'Rooms can only be deleted by the person who created it.'
-                return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": None})
+    *_, room_query = firestore_db.collection('rooms').where(filter=FieldFilter('name', '==', form['room'])).where(filter=FieldFilter('user_id', '==', form['user'])).get()
+    days = room_query.get('days')
+    
+    for day_index, day in enumerate(days):
+        """Check if the room has bookings associated."""
+        if day.get().get('bookings'):
+            rooms = firestore_db.collection('rooms').stream()
+            errors = 'Cannot delete room with bookings'
+            return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": None})
+        else:
+            days[day_index].delete()
+            del days[day_index]
+
+    user_rooms = user.get().get('rooms_list')
+    room_names = [room.get().get("name") for room in user_rooms]
+    room_index = room_names.index(form['room'])
+    room_query.reference.update({'days':[]})
+    user_rooms[room_index].delete()
+    del user_rooms[room_index]
+    user.update({'rooms_list': user_rooms})
 
     return RedirectResponse('/', status.HTTP_302_FOUND)
 
