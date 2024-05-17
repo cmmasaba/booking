@@ -170,7 +170,7 @@ async def bookRoom(request: Request):
     rooms_list = []
     for room in firestore_db.collection("rooms").stream():
         rooms_list.append(room.get("name"))
-    return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
+    return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list, "min_date": datetime.datetime.today().strftime("%Y-%m-%d")})
 
 @app.post("/book-room", response_class=RedirectResponse)
 async def bookRoom(request: Request):
