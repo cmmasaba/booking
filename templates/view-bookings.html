@@ -19,11 +19,35 @@
                     </a>
                 </div>
             </header>
-            {% if errors %}
-                <ul>
-                    <li class="alert alert-danger">{{ errors }}</li>
-                </ul>
-            {% endif %}
+            <section id="bookings-list">
+                {% if errors %}
+                    <ul>
+                        <li class="alert alert-danger">{{ errors }}</li>
+                    </ul>
+                {% endif %}
+                {% if bookings %}
+                    <ul>
+                        {% for booking in bookings %}
+                            <li style="margin: 5px auto;">
+                                {{ booking.get("name") }} at {{ booking.get("room") }} on {{ booking.get("date") }} from {{ booking.get("from") }} to {{ booking.get("to") }}
+                                <div class="btn-group" role="group">
+                                    <a style="margin: 0 10px;" href="{{ url_for('editBooking').include_query_params(booking_room=booking.get('room'), date=booking.get('date'), start=booking.get('from'), end=booking.get('to')) }}" role="button" class="btn btn-outline-primary btn-sm">Edit</a>
+                                    <form action="/delete-booking" method="post">
+                                        <input type="hidden" value="{{ booking.get('room') }}" name="room">
+                                        <input type="hidden" value="{{ booking.get('date') }}" name="date">
+                                        <input type="hidden" value="{{ booking.get('from') }}" name="from">
+                                        <input type="hidden" value="{{ booking.get('to') }}" name="to">
+                                        <input type="hidden" value="{{ booking.get('name') }}" name="name">
+                                        <button class="btn btn-outline-danger btn-sm" type="submit" style="margin: 0 10px;">Delete</button>
+                                    </form>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No bookings available.</p>
+                {% endif %}
+            </section>
         </main>
     </body>
 </html>
