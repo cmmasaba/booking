@@ -8,7 +8,7 @@
         <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
     </head>
     <body>
-        <main id="main-box">
+        <main id="main-box" style="width: 800px;">
             <header class="p-3 mb-3 border-bottom" id="header">
                 <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
                     <a class="nav-link" href="/">
@@ -42,12 +42,26 @@
                     </ul>
                 {% endif %}
                 {% if bookings %}
-                    <ul>
-                        {% for booking in bookings %}
-                            <li style="margin: 5px auto;">
-                                {{ booking.get("name") }} at {{ booking.get("room") }} on {{ booking.get("date") }} from {{ booking.get("from") }} to {{ booking.get("to") }}
-                                <div class="btn-group" role="group">
+                    <table class="table table-borderless">
+                        <thead>
+                            <tr>
+                              <th scope="col">#</th>
+                              <th scope="col"></th>
+                              <th scope="col"></th>
+                              <th scope="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings %}
+                            <tr>
+                                <th scope="row">{{ loop.index1 }}</th>
+                                <td style="width: 80%;">
+                                    {{ booking.get("name") }} at {{ booking.get("room") }} on {{ booking.get("date") }} from {{ booking.get("from") }} to {{ booking.get("to") }}
+                                </td>
+                                <td style="width: 10%;">
                                     <a style="margin: 0 10px;" href="{{ url_for('editBooking').include_query_params(booking_room=booking.get('room'), date=booking.get('date'), start=booking.get('from'), end=booking.get('to')) }}" role="button" class="btn btn-outline-primary btn-sm">Edit</a>
+                                </td>
+                                <td style="width: 10%;">
                                     <form action="/delete-booking" method="post">
                                         <input type="hidden" value="{{ booking.get('room') }}" name="room">
                                         <input type="hidden" value="{{ booking.get('date') }}" name="date">
@@ -56,10 +70,11 @@
                                         <input type="hidden" value="{{ booking.get('name') }}" name="name">
                                         <button class="btn btn-outline-danger btn-sm" type="submit" style="margin: 0 10px;">Delete</button>
                                     </form>
-                                </div>
-                            </li>
-                        {% endfor %}
-                    </ul>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 {% else %}
                     <p>No bookings available.</p>
                 {% endif %}
