@@ -72,7 +72,7 @@ async def root(request: Request):
 async def setUsername(request: Request):
     """Route (GET) for setting the username when a user logs in for the first time."""
     id_token = request.cookies.get("token")
-    errors = ""
+    errors = None
     user_token = None
     user = None
 
@@ -80,7 +80,7 @@ async def setUsername(request: Request):
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
     
     user = getUser(user_token).get()
 
@@ -101,7 +101,7 @@ async def setUsername(request: Request):
     """
     id_token = request.cookies.get("token")
     user_token = None
-    errors = ''
+    errors = None
 
     user_token = validateFirebaseToken(id_token)
 
@@ -120,7 +120,7 @@ async def addRoom(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = ''
+    errors = None
 
     user_token = validateFirebaseToken(id_token)
 
