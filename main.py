@@ -402,7 +402,7 @@ async def editBooking(request: Request, booking_room: str, date: str, start: str
 
     user = getUser(user_token).get()
 
-    rooms_list = firestore_db.collection("rooms").stream()
+    rooms = [room.get("name") for room in firestore_db.collection("rooms").stream()]
 
     *_, room = firestore_db.collection("rooms").where(filter=FieldFilter('name', '==', booking_room)).get()
     for day in room.get('days'):
@@ -419,7 +419,7 @@ async def editBooking(request: Request, booking_room: str, date: str, start: str
                     }
                     del bookings[index]
                     day.update({'bookings': bookings})
-                    return templates.TemplateResponse('edit-booking.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "booking": booking, "rooms_list": rooms_list})
+                    return templates.TemplateResponse('edit-booking.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "booking": booking, "rooms_list": rooms})
 
 @app.post('/edit-booking')
 async def editBooking(request: Request):
