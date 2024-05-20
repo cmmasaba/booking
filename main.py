@@ -303,10 +303,10 @@ async def viewBookings(request: Request):
         for booking in day.get('bookings'):
             if booking['user'] == user.id:
                 bookings_list.append(booking)
-    return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "bookings": bookings_list})
+    return templates.TemplateResponse('view-bookings.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "bookings": bookings_list})
 
 @app.post('/view-bookings')
-async def viewBookings(request: Request):
+async def filterByRoom(request: Request):
     """Show all the bookings the user has made on one the rooms."""
     id_token = request.cookies.get("token")
     user_token = None
@@ -328,7 +328,31 @@ async def viewBookings(request: Request):
         for booking in day.get('bookings'):
             if booking['user'] == user.id and booking['room'] == form['roomName']:
                 bookings_list.append(booking)
-    return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "all_bookings": None, "one_room_bookings": bookings_list, "filteredbookings": None})
+    return templates.TemplateResponse('view-bookings.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "bookings": bookings_list})
+
+@app.post("/view-bookings", response_class=RedirectResponse)
+async def filterByDay(request: Request):
+    """Gets all the room bookings falling in the given day."""
+    id_token = request.cookies.get("token")
+    user_token = None
+    user = None
+
+    user_token = validateFirebaseToken(id_token)
+
+    # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
+    if not user_token:
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
+
+    # get form data from the html page
+    form = await request.form()
+
+    user = getUser(user_token)
+    bookings = []
+    for day in firestore_db.collection('days').where(filter=FieldFilter('date', '==', form['filterDate'])).stream():
+        for booking in day.get("bookings"):
+            bookings.append(booking)
+
+    return templates.TemplateResponse('view-bookings.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "bookings": bookings})
 
 @app.post('/delete-booking')
 async def deleteBooking(request: Request):
@@ -536,31 +560,6 @@ async def deleteRoom(request: Request):
     user.update({'rooms_list': user_rooms})
 
     return RedirectResponse('/', status.HTTP_302_FOUND)
-
-@app.post("/filter-by-day", response_class=RedirectResponse)
-async def filterByDay(request: Request):
-    """Gets all the room bookings falling in the given day."""
-    id_token = request.cookies.get("token")
-    user_token = None
-    user = None
-
-    user_token = validateFirebaseToken(id_token)
-
-    # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
-    if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
-
-    # get form data from the html page
-    form = await request.form()
-
-    user = getUser(user_token)
-    bookings = []
-    for day in firestore_db.collection('days').where(filter=FieldFilter('date', '==', form['filterDate'])).stream():
-        for booking in day.get("bookings"):
-            bookings.append(booking)
-
-    rooms = firestore_db.collection('rooms').stream()
-    return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": bookings})
 
 @app.get("/view-room/{room}", response_class=RedirectResponse)
 async def viewRoom(request: Request, room: str):
