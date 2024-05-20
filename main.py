@@ -297,16 +297,17 @@ async def viewBookings(request: Request):
         return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
 
     user = getUser(user_token).get()
+    rooms = [room.get("name") for room in firestore_db.collection("rooms").stream()]
 
     bookings_list = []
     for day in firestore_db.collection("days").stream():
         for booking in day.get('bookings'):
             if booking['user'] == user.id:
                 bookings_list.append(booking)
-    return templates.TemplateResponse('view-bookings.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "bookings": bookings_list})
+    return templates.TemplateResponse('view-bookings.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "rooms": rooms, "bookings": bookings_list})
 
 @app.post('/view-bookings')
-async def filterByRoom(request: Request):
+async def filterByRoomAndDay(request: Request):
     """Show all the bookings the user has made on one the rooms."""
     id_token = request.cookies.get("token")
     user_token = None
@@ -320,39 +321,26 @@ async def filterByRoom(request: Request):
     
     # get form data from the html page
     form = await request.form()
+    date = form['date']
+    room = form['room']
 
     user = getUser(user_token).get()
 
     bookings_list = []
-    for day in firestore_db.collection("days").stream():
-        for booking in day.get('bookings'):
-            if booking['user'] == user.id and booking['room'] == form['roomName']:
-                bookings_list.append(booking)
+    if date:
+        for day in firestore_db.collection("days").where(filter=FieldFilter('date', '==', date)).stream():
+            for booking in day.get('bookings'):
+                if room:
+                    if booking['user'] == user.id and booking['room'] == room:
+                        bookings_list.append(booking)
+                else:
+                    bookings_list.append(booking)
+    elif room:
+        for day in firestore_db.collection("days").stream():
+            for booking in day.get('bookings'):
+                if booking['user'] == user.id and booking['room'] == room:
+                        bookings_list.append(booking)
     return templates.TemplateResponse('view-bookings.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "bookings": bookings_list})
-
-@app.post("/view-bookings", response_class=RedirectResponse)
-async def filterByDay(request: Request):
-    """Gets all the room bookings falling in the given day."""
-    id_token = request.cookies.get("token")
-    user_token = None
-    user = None
-
-    user_token = validateFirebaseToken(id_token)
-
-    # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
-    if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
-
-    # get form data from the html page
-    form = await request.form()
-
-    user = getUser(user_token)
-    bookings = []
-    for day in firestore_db.collection('days').where(filter=FieldFilter('date', '==', form['filterDate'])).stream():
-        for booking in day.get("bookings"):
-            bookings.append(booking)
-
-    return templates.TemplateResponse('view-bookings.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "bookings": bookings})
 
 @app.post('/delete-booking')
 async def deleteBooking(request: Request):
