@@ -51,7 +51,7 @@
                                 <a class="nav-link btn btn-link" role="button" href="{{ url_for('bookRoom') }}">Book Room</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link btn btn-link" role="button" href="{{ url_for('bookRoom') }}">View Bookings</a>
+                                <a class="nav-link btn btn-link" role="button" href="{{ url_for('viewBookings') }}">View Bookings</a>
                             </li>
                         {% endif %}
                         <li class="nav-item" style="margin-left: 800px;">
@@ -83,108 +83,6 @@
                                 </li>
                             {% endfor %}
                         </ul>
-                    </section>
-                    <section id="list-of-bookings-all-rooms" hidden="false" style="margin: 50px auto;">
-                        <hr>
-                        <form action="{{ url_for('viewAllRoomsBookings') }}" method="get">
-                            <h4>All your bookings on available rooms</h4>
-                            <div class="col-12" style="margin: 0 auto;">
-                                <button type="submit" class="nav-link btn btn-link btn-sm" id="view-all-rooms-bookings">View</button>
-                            </div>
-                            {% if all_bookings %}
-                                <ul>
-                                    {% for booking in all_bookings %}
-                                        <li style="margin: 5px auto;">
-                                            {{ booking.get("name") }} at {{ booking.get("room") }} on {{ booking.get("date") }} from {{ booking.get("from") }} to {{ booking.get("to") }}
-                                            <div class="btn-group" role="group">
-                                                <a style="margin: 0 10px;" href="{{ url_for('editBooking').include_query_params(booking_room=booking.get('room'), date=booking.get('date'), start=booking.get('from'), end=booking.get('to')) }}" role="button" class="btn btn-outline-primary btn-sm">Edit</a>
-                                                <form action="/delete-booking" method="post">
-                                                    <input type="hidden" value="{{ booking.get('room') }}" name="room">
-                                                    <input type="hidden" value="{{ booking.get('date') }}" name="date">
-                                                    <input type="hidden" value="{{ booking.get('from') }}" name="from">
-                                                    <input type="hidden" value="{{ booking.get('to') }}" name="to">
-                                                    <input type="hidden" value="{{ booking.get('name') }}" name="name">
-                                                    <button class="btn btn-outline-danger btn-sm" type="submit" style="margin: 0 10px;">Delete</button>
-                                                </form>
-                                            </div>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            {% endif %}
-                        </form>
-                    </section>
-                    <section id="list-of-bookings-one-room" hidden="true" style="margin: 50px auto;">
-                        <hr>
-                        <form class="row mb-3" method="post" action="{{ url_for('viewOneRoomBookings') }}">
-                            <div class="row mb-3">
-                                <label for="roomName" class="col-sm-2 col-form-label">Name of room</label>
-                                <select id="roomName" class="form-select form-select-sm" name="roomName" style="width: 300px;">
-                                    <option selected>Select from available rooms</option>
-                                    {% for room in rooms_list %}
-                                        <option value="{{ room.get('name') }}">{{ room.get("name") }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <h4>All your bookings on this room</h4>
-                            <div class="col-12" style="margin: 0 auto;">
-                                <button type="submit" class="nav-link btn btn-link btn-sm" id="view-one-room-bookings">View</button>
-                            </div>
-                            {% if one_room_bookings %}
-                                <ul>
-                                    {% for booking in one_room_bookings %}
-                                        <li style="margin: 5px auto;">
-                                            {{ booking.get("name") }} at {{ booking.get("room") }} on {{ booking.get("date") }} from {{ booking.get("from") }} to {{ booking.get("to") }}
-                                            <div class="btn-group" role="group">
-                                                <a style="margin: 0 10px;" href="{{ url_for('editBooking').include_query_params(booking_room=booking.get('room'), date=booking.get('date'), start=booking.get('from'), end=booking.get('to')) }}" role="button" class="btn btn-outline-primary btn-sm">Edit</a>
-                                                <form action="/delete-booking" method="post">
-                                                    <input type="hidden" value="{{ booking.get('room') }}" name="room">
-                                                    <input type="hidden" value="{{ booking.get('date') }}" name="date">
-                                                    <input type="hidden" value="{{ booking.get('from') }}" name="from">
-                                                    <input type="hidden" value="{{ booking.get('to') }}" name="to">
-                                                    <input type="hidden" value="{{ booking.get('name') }}" name="name">
-                                                    <button class="btn btn-outline-danger btn-sm" type="submit" style="margin: 0 10px;">Delete</button>
-                                                </form>
-                                            </div>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            {% endif %}
-                        </form>
-                    </section>
-                    <section id="list-of-bookings-filtered-by-day" hidden="true" style="margin: 50px auto;">
-                        <hr>
-                        <form class="row mb-3" method="post" action="{{ url_for('filterByDay') }}">
-                            <div class="row mb-3">
-                                <label for="bookingDate" class="col-sm-2 col-form-label">Date</label>
-                                <div class="col-sm-4">
-                                  <input type="date" class="form-control" id="filterDate" name="filterDate" style="width: 300px;">
-                                </div>
-                            </div>
-                            <h4>View bookings filtered by the specified day</h4>
-                            <div class="col-12" style="margin: 0 auto;">
-                                <button type="submit" class="nav-link btn btn-link btn-sm" id="view-one-room-bookings">View</button>
-                            </div>
-                            {% if filteredbookings %}
-                                <ul>
-                                    {% for booking in filteredbookings %}
-                                        <li style="margin: 5px auto;">
-                                            {{ booking.get("name") }} at {{ booking.get("room") }} on {{ booking.get("date") }} from {{ booking.get("from") }} to {{ booking.get("to") }}
-                                            <div class="btn-group" role="group">
-                                                <a style="margin: 0 10px;" href="{{ url_for('editBooking').include_query_params(booking_room=booking.get('room'), date=booking.get('date'), start=booking.get('from'), end=booking.get('to')) }}" role="button" class="btn btn-outline-primary btn-sm">Edit</a>
-                                                <form action="/delete-booking" method="post">
-                                                    <input type="hidden" value="{{ booking.get('room') }}" name="room">
-                                                    <input type="hidden" value="{{ booking.get('date') }}" name="date">
-                                                    <input type="hidden" value="{{ booking.get('from') }}" name="from">
-                                                    <input type="hidden" value="{{ booking.get('to') }}" name="to">
-                                                    <input type="hidden" value="{{ booking.get('name') }}" name="name">
-                                                    <button class="btn btn-outline-danger btn-sm" type="submit" style="margin: 0 10px;">Delete</button>
-                                                </form>
-                                            </div>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            {% endif %}
-                        </form>
                     </section>
                     <section id="add-form" hidden="true">
                         <hr>
