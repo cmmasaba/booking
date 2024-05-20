@@ -297,14 +297,13 @@ async def viewBookings(request: Request):
         return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
 
     user = getUser(user_token).get()
-    rooms = firestore_db.collection('rooms').stream()
 
     bookings_list = []
     for day in firestore_db.collection("days").stream():
         for booking in day.get('bookings'):
             if booking['user'] == user.id:
                 bookings_list.append(booking)
-    return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "rooms_list": rooms, "bookings": bookings_list})
+    return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "bookings": bookings_list})
 
 @app.post('/view-bookings')
 async def viewBookings(request: Request):
@@ -323,14 +322,13 @@ async def viewBookings(request: Request):
     form = await request.form()
 
     user = getUser(user_token).get()
-    rooms = firestore_db.collection('rooms').stream()
 
     bookings_list = []
     for day in firestore_db.collection("days").stream():
         for booking in day.get('bookings'):
             if booking['user'] == user.id and booking['room'] == form['roomName']:
                 bookings_list.append(booking)
-    return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": bookings_list, "filteredbookings": None})
+    return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "all_bookings": None, "one_room_bookings": bookings_list, "filteredbookings": None})
 
 @app.post('/delete-booking')
 async def deleteBooking(request: Request):
