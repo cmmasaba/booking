@@ -283,8 +283,8 @@ async def bookRoom(request: Request):
         
     return RedirectResponse('/', status.HTTP_302_FOUND)
 
-@app.get('/view-all-room-bookings')
-async def viewAllRoomsBookings(request: Request):
+@app.get('/view-bookings')
+async def viewBookings(request: Request):
     """Show all the bookings the user has made on all the rooms."""
     id_token = request.cookies.get("token")
     user_token = None
@@ -304,10 +304,10 @@ async def viewAllRoomsBookings(request: Request):
         for booking in day.get('bookings'):
             if booking['user'] == user.id:
                 bookings_list.append(booking)
-    return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "rooms_list": rooms, "all_bookings": bookings_list, "one_room_bookings": None, "filteredbookings": None})
+    return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "rooms_list": rooms, "bookings": bookings_list})
 
-@app.post('/view-one-room-bookings')
-async def viewOneRoomBookings(request: Request):
+@app.post('/view-bookings')
+async def viewBookings(request: Request):
     """Show all the bookings the user has made on one the rooms."""
     id_token = request.cookies.get("token")
     user_token = None
