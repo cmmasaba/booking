@@ -312,6 +312,7 @@ async def filterByRoomAndDay(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
+    errors = ''
 
     user_token = validateFirebaseToken(id_token)
 
@@ -345,7 +346,7 @@ async def filterByRoomAndDay(request: Request):
             for booking in day.get('bookings'):
                 if booking['user'] == user.id:
                     bookings_list.append(booking)
-    return templates.TemplateResponse('view-bookings.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "bookings": bookings_list})
+    return templates.TemplateResponse('view-bookings.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "bookings": bookings_list})
 
 @app.post('/delete-booking')
 async def deleteBooking(request: Request):
@@ -353,12 +354,13 @@ async def deleteBooking(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
+    errors = ''
 
     user_token = validateFirebaseToken(id_token)
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
     
     # get form data from the html page
     form = await request.form()
@@ -390,12 +392,13 @@ async def editBooking(request: Request, booking_room: str, date: str, start: str
     id_token = request.cookies.get("token")
     user_token = None
     user = None
+    errors = ''
 
     user_token = validateFirebaseToken(id_token)
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
     
     # get form data from the html page
     #form = await request.form()
@@ -419,7 +422,7 @@ async def editBooking(request: Request, booking_room: str, date: str, start: str
                     }
                     del bookings[index]
                     day.update({'bookings': bookings})
-                    return templates.TemplateResponse('edit-booking.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "booking": booking, "rooms_list": rooms})
+                    return templates.TemplateResponse('edit-booking.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "booking": booking, "rooms_list": rooms})
 
 @app.post('/edit-booking')
 async def editBooking(request: Request):
