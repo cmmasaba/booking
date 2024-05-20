@@ -45,14 +45,17 @@
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <button  class="nav-link btn btn-link btn-sm" id="add-room">Add Room</button>
+                                    <button  class="nav-link btn btn-link" id="add-room">Add Room</button>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link btn btn-link btn-sm" role="button" href="{{ url_for('bookRoom') }}">Book Room</a>
+                                    <a class="nav-link btn btn-link" role="button" href="{{ url_for('bookRoom') }}">Book Room</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link btn btn-link" role="button" href="{{ url_for('bookRoom') }}">View Bookings</a>
                                 </li>
                                 {% endif %}
-                                <li class="nav-item" style="margin-left: 900px;">
-                                    <button type="button" class="btn btn-danger" id="sign-out" hidden="true">Sign Out</button>
+                                <li class="nav-item" style="margin-left: 800px;">
+                                    <button type="button" class="btn btn-danger btn-sm" id="sign-out" hidden="true">Sign Out</button>
                                 </li>
                             </ul>
                     </header>
