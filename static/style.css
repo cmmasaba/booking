@@ -1,5 +1,6 @@
 #main-box {
     margin: 0 300px;
+    font-size: 16px;
 }
 
 #book-page {
@@ -13,4 +14,8 @@
 #view-room,
 #rooms-detail {
     margin: 50px 50px;
+}
+
+table {
+    table-layout: auto;
 }

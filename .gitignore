@@ -1,3 +1,4 @@
-env/
+*env/
 __pycache__/
-cpa2.json
+credentials.json
+*workspace

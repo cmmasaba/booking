@@ -52,7 +52,7 @@ async def root(request: Request):
     # Query firebase for the request token. An error message is set in case we want to output an error to 
     # the user in the template.
     id_token = request.cookies.get("token")
-    error_message = "No error here"
+    errors = None
     user_token = None
     user = None
 
@@ -60,19 +60,19 @@ async def root(request: Request):
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None,  "errors": errors, "user_info": None})
     
     user = getUser(user_token).get()
     rooms = []
     for room in firestore_db.collection('rooms').stream():
         rooms.append(room)
-    return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "error_message": error_message, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None})
+    return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms})
 
 @app.get('/set-username', response_class=HTMLResponse)
 async def setUsername(request: Request):
     """Route (GET) for setting the username when a user logs in for the first time."""
     id_token = request.cookies.get("token")
-    errors = ""
+    errors = None
     user_token = None
     user = None
 
@@ -80,7 +80,7 @@ async def setUsername(request: Request):
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
     
     user = getUser(user_token).get()
 
@@ -101,7 +101,7 @@ async def setUsername(request: Request):
     """
     id_token = request.cookies.get("token")
     user_token = None
-    errors = ''
+    errors = None
 
     user_token = validateFirebaseToken(id_token)
 
@@ -120,7 +120,7 @@ async def addRoom(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = ''
+    errors = None
 
     user_token = validateFirebaseToken(id_token)
 
@@ -157,7 +157,7 @@ async def bookRoom(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = ''
+    errors = None
 
     user_token = validateFirebaseToken(id_token)
 
@@ -170,7 +170,8 @@ async def bookRoom(request: Request):
     rooms_list = []
     for room in firestore_db.collection("rooms").stream():
         rooms_list.append(room.get("name"))
-    return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
+    return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list,
+                                                         "min_date": datetime.datetime.today().strftime("%Y-%m-%d"), "min_time": datetime.datetime.now().time().strftime("%H:%M")})
 
 @app.post("/book-room", response_class=RedirectResponse)
 async def bookRoom(request: Request):
@@ -178,7 +179,7 @@ async def bookRoom(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = ''
+    errors = None
 
     user_token = validateFirebaseToken(id_token)
 
@@ -282,54 +283,71 @@ async def bookRoom(request: Request):
         
     return RedirectResponse('/', status.HTTP_302_FOUND)
 
-@app.get('/view-all-room-bookings')
-async def viewAllRoomsBookings(request: Request):
+@app.get('/view-bookings')
+async def viewBookings(request: Request):
     """Show all the bookings the user has made on all the rooms."""
     id_token = request.cookies.get("token")
     user_token = None
     user = None
+    errors = None
 
     user_token = validateFirebaseToken(id_token)
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
 
     user = getUser(user_token).get()
-    rooms = firestore_db.collection('rooms').stream()
+    rooms = [room.get("name") for room in firestore_db.collection("rooms").stream()]
 
     bookings_list = []
     for day in firestore_db.collection("days").stream():
         for booking in day.get('bookings'):
             if booking['user'] == user.id:
                 bookings_list.append(booking)
-    return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "rooms_list": rooms, "all_bookings": bookings_list, "one_room_bookings": None, "filteredbookings": None})
+    return templates.TemplateResponse('view-bookings.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms": rooms, "bookings": bookings_list})
 
-@app.post('/view-one-room-bookings')
-async def viewOneRoomBookings(request: Request):
+@app.post('/view-bookings')
+async def filterByRoomAndDay(request: Request):
     """Show all the bookings the user has made on one the rooms."""
     id_token = request.cookies.get("token")
     user_token = None
     user = None
+    errors = ''
 
     user_token = validateFirebaseToken(id_token)
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
     
     # get form data from the html page
     form = await request.form()
+    date = form['date']
+    room = form['room']
 
     user = getUser(user_token).get()
-    rooms = firestore_db.collection('rooms').stream()
 
     bookings_list = []
-    for day in firestore_db.collection("days").stream():
-        for booking in day.get('bookings'):
-            if booking['user'] == user.id and booking['room'] == form['roomName']:
-                bookings_list.append(booking)
-    return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": bookings_list, "filteredbookings": None})
+    if date:
+        for day in firestore_db.collection("days").where(filter=FieldFilter('date', '==', date)).stream():
+            for booking in day.get('bookings'):
+                if room:
+                    if booking['user'] == user.id and booking['room'] == room:
+                        bookings_list.append(booking)
+                else:
+                    bookings_list.append(booking)
+    elif room:
+        for day in firestore_db.collection("days").stream():
+            for booking in day.get('bookings'):
+                if booking['user'] == user.id and booking['room'] == room:
+                        bookings_list.append(booking)
+    else:
+        for day in firestore_db.collection("days").stream():
+            for booking in day.get('bookings'):
+                if booking['user'] == user.id:
+                    bookings_list.append(booking)
+    return templates.TemplateResponse('view-bookings.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "bookings": bookings_list})
 
 @app.post('/delete-booking')
 async def deleteBooking(request: Request):
@@ -337,12 +355,13 @@ async def deleteBooking(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
+    errors = ''
 
     user_token = validateFirebaseToken(id_token)
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
     
     # get form data from the html page
     form = await request.form()
@@ -374,19 +393,20 @@ async def editBooking(request: Request, booking_room: str, date: str, start: str
     id_token = request.cookies.get("token")
     user_token = None
     user = None
+    errors = ''
 
     user_token = validateFirebaseToken(id_token)
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
     
     # get form data from the html page
     #form = await request.form()
 
     user = getUser(user_token).get()
 
-    rooms_list = firestore_db.collection("rooms").stream()
+    rooms = [room.get("name") for room in firestore_db.collection("rooms").stream()]
 
     *_, room = firestore_db.collection("rooms").where(filter=FieldFilter('name', '==', booking_room)).get()
     for day in room.get('days'):
@@ -403,7 +423,7 @@ async def editBooking(request: Request, booking_room: str, date: str, start: str
                     }
                     del bookings[index]
                     day.update({'bookings': bookings})
-                    return templates.TemplateResponse('edit-booking.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "booking": booking, "rooms_list": rooms_list})
+                    return templates.TemplateResponse('edit-booking.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "booking": booking, "rooms_list": rooms})
 
 @app.post('/edit-booking')
 async def editBooking(request: Request):
@@ -411,12 +431,13 @@ async def editBooking(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
+    errors = ''
 
     user_token = validateFirebaseToken(id_token)
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
     
     # get form data from the html page
     form = await request.form()
@@ -503,65 +524,40 @@ async def deleteRoom(request: Request):
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
     
     # get form data from the html page
     form = await request.form()
 
     user = getUser(user_token)
 
-    rooms = user.get().get('rooms_list')
-    room_query = None
-    for room_index, room in enumerate(rooms):
-        if room.get().get("name") == form["room"]:
-            if form['user'] == user.id:
-                room_query = room
+    if form['user'] != user.id:
+        rooms = firestore_db.collection('rooms').stream()
+        errors = 'Rooms can only be deleted by the person who created it.'
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms})
 
-                days = room_query.get().get('days')
-                for day_index, day in enumerate(days):
-                    """Check if the room has bookings associated."""
-                    if day.get().get('bookings'):
-                        rooms = firestore_db.collection('rooms').stream()
-                        errors = 'Cannot delete room with bookings'
-                        return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": None})
-                    else:
-                        days[day_index].delete()
-                        del days[day_index]
-                room_query.update({'days':[]})
-                rooms[room_index].delete()
-                del rooms[room_index]
-                user.update({'rooms_list': rooms})
-            else:
-                rooms = firestore_db.collection('rooms').stream()
-                errors = 'Rooms can only be deleted by the person who created it.'
-                return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": None})
+    *_, room_query = firestore_db.collection('rooms').where(filter=FieldFilter('name', '==', form['room'])).where(filter=FieldFilter('user_id', '==', form['user'])).get()
+    days = room_query.get('days')
+    
+    for day_index, day in enumerate(days):
+        """Check if the room has bookings associated."""
+        if day.get().get('bookings'):
+            rooms = firestore_db.collection('rooms').stream()
+            errors = 'Cannot delete room with bookings'
+            return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms})
+        else:
+            days[day_index].delete()
+            del days[day_index]
+
+    user_rooms = user.get().get('rooms_list')
+    room_names = [room.get().get("name") for room in user_rooms]
+    room_index = room_names.index(form['room'])
+    room_query.reference.update({'days':[]})
+    user_rooms[room_index].delete()
+    del user_rooms[room_index]
+    user.update({'rooms_list': user_rooms})
 
     return RedirectResponse('/', status.HTTP_302_FOUND)
-
-@app.post("/filter-by-day", response_class=RedirectResponse)
-async def filterByDay(request: Request):
-    """Gets all the room bookings falling in the given day."""
-    id_token = request.cookies.get("token")
-    user_token = None
-    user = None
-
-    user_token = validateFirebaseToken(id_token)
-
-    # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
-    if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
-
-    # get form data from the html page
-    form = await request.form()
-
-    user = getUser(user_token)
-    bookings = []
-    for day in firestore_db.collection('days').where(filter=FieldFilter('date', '==', form['filterDate'])).stream():
-        for booking in day.get("bookings"):
-            bookings.append(booking)
-
-    rooms = firestore_db.collection('rooms').stream()
-    return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": bookings})
 
 @app.get("/view-room/{room}", response_class=RedirectResponse)
 async def viewRoom(request: Request, room: str):
@@ -569,12 +565,13 @@ async def viewRoom(request: Request, room: str):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
+    errors = ''
 
     user_token = validateFirebaseToken(id_token)
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
 
     # get form data from the html page
     # form = await request.form()
@@ -586,11 +583,11 @@ async def viewRoom(request: Request, room: str):
     except ValueError:
         rooms = firestore_db.collection('rooms').stream()
         errors = 'The selected room is no longer available.'
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms})
 
     for day in room_query.get("days"):
         if day.get().get("bookings"):
             '''Only add to bookings if the list of bookings associated with this day is not empty.'''
             bookings.append({day.get().get('date'): [item for item in day.get().get("bookings")]})
 
-    return templates.TemplateResponse('view-room.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "room": room_query, "bookings": bookings})
+    return templates.TemplateResponse('view-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "room": room_query, "bookings": bookings})

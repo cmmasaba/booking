@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Bookings</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+    </head>
+    <body>
+        <main id="main-box" style="width: 800px;">
+            <header class="p-3 mb-3 border-bottom" id="header">
+                <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+                    <a class="nav-link" href="/">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" fill="currentColor" class="bi bi-house-fill" viewBox="0 0 16 16">
+                            <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293z"/>
+                            <path d="m8 3.293 6 6V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5V9.293z"/>
+                        </svg>
+                    </a>
+                </div>
+                <form method="post" action="{{ url_for('filterByRoomAndDay') }}" style="margin-top: 20px;">
+                    <span style="font-style: italic;">Filter bookings by day, month or both</span>
+                    <div>
+                        <select id="roomName" class="col-sm-2" name="room" style="width: 200px;">
+                            {% for room in rooms %}
+                                <option value="{{ room }}">{{ room }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="date" class="col-sm-2" id="date" name="date" style="width: 200px;">
+                        <button class="btn btn-outline-secondary" type="submit">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" fill="currentColor" class="bi bi-funnel-fill" viewBox="0 0 16 16">
+                                <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+            </header>
+            <section id="bookings-list">
+                {% if errors %}
+                    <ul>
+                        <li class="alert alert-danger">{{ errors }}</li>
+                    </ul>
+                {% endif %}
+                {% if bookings %}
+                    <table class="table table-borderless">
+                        <thead>
+                            <tr>
+                              <th scope="col">#</th>
+                              <th scope="col"></th>
+                              <th scope="col"></th>
+                              <th scope="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings %}
+                            <tr>
+                                <th scope="row">{{ loop.index1 }}</th>
+                                <td style="width: 80%;">
+                                    {{ booking.get("name") }} at {{ booking.get("room") }} on {{ booking.get("date") }} from {{ booking.get("from") }} to {{ booking.get("to") }}
+                                </td>
+                                <td style="width: 10%;">
+                                    <a style="margin: 0 10px;" href="{{ url_for('editBooking').include_query_params(booking_room=booking.get('room'), date=booking.get('date'), start=booking.get('from'), end=booking.get('to')) }}" role="button" class="btn btn-outline-primary btn-sm">Edit</a>
+                                </td>
+                                <td style="width: 10%;">
+                                    <form action="/delete-booking" method="post">
+                                        <input type="hidden" value="{{ booking.get('room') }}" name="room">
+                                        <input type="hidden" value="{{ booking.get('date') }}" name="date">
+                                        <input type="hidden" value="{{ booking.get('from') }}" name="from">
+                                        <input type="hidden" value="{{ booking.get('to') }}" name="to">
+                                        <input type="hidden" value="{{ booking.get('name') }}" name="name">
+                                        <button class="btn btn-outline-danger btn-sm" type="submit" style="margin: 0 10px;">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>No bookings available.</p>
+                {% endif %}
+            </section>
+        </main>
+    </body>
+</html>
