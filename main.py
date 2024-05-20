@@ -66,7 +66,7 @@ async def root(request: Request):
     rooms = []
     for room in firestore_db.collection('rooms').stream():
         rooms.append(room)
-    return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "error_message": error_message, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None})
+    return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "error_message": error_message, "user_info": user, "rooms_list": rooms})
 
 @app.get('/set-username', response_class=HTMLResponse)
 async def setUsername(request: Request):
