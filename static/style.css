@@ -15,3 +15,7 @@
 #rooms-detail {
     margin: 50px 50px;
 }
+
+table {
+    table-layout: auto;
+}
