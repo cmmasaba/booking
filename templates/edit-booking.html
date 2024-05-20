@@ -31,7 +31,7 @@
                     <div class="row mb-3">
                         <label for="eventName" class="col-sm-2 col-form-label">Event Name</label>
                         <div class="col-sm-4">
-                          <input type="text" class="form-control" id="eventName" name="eventName" value="{{ booking['event'] }}" required>
+                          <input type="text" id="eventName" name="eventName" value="{{ booking['event'] }}" required>
                         </div>
                     </div>
                     <div class="row mb-3">
@@ -46,19 +46,19 @@
                     <div class="row mb-3">
                         <label for="bookingDate" class="col-sm-2 col-form-label">Date</label>
                         <div class="col-sm-4">
-                          <input type="date" class="form-control" id="bookingDate" name="bookingDate" value="{{ booking['date'] }}" required>
+                          <input type="date" id="bookingDate" name="bookingDate" value="{{ booking['date'] }}" required>
                         </div>
                     </div>
                     <div class="row mb-3">
                         <label for="bookingStartTime" class="col-sm-2 col-form-label">Start Time</label>
                         <div class="col-sm-4">
-                          <input type="time" class="form-control" id="bookingStartTime" name="bookingStartTime" value="{{ booking['from'] }}" required>
+                          <input type="time" min="07:00" max="23:00" id="bookingStartTime" name="bookingStartTime" value="{{ booking['from'] }}" required>
                         </div>
                     </div>
                     <div class="row mb-3">
                         <label for="bookingEndTime" class="col-sm-2 col-form-label">End Time</label>
                         <div class="col-sm-4">
-                          <input type="time" class="form-control" id="bookingEndTime" name="bookingEndTime" value="{{ booking['to'] }}" required>
+                          <input type="time" min="07:00" max="23:00" id="bookingEndTime" name="bookingEndTime" value="{{ booking['to'] }}" required>
                         </div>
                     </div>
                     <div class="col-12" style="margin: 0 auto;">
