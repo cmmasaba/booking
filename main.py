@@ -529,7 +529,7 @@ async def deleteRoom(request: Request):
     if form['user'] != user.id:
         rooms = firestore_db.collection('rooms').stream()
         errors = 'Rooms can only be deleted by the person who created it.'
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms})
 
     *_, room_query = firestore_db.collection('rooms').where(filter=FieldFilter('name', '==', form['room'])).where(filter=FieldFilter('user_id', '==', form['user'])).get()
     days = room_query.get('days')
@@ -539,7 +539,7 @@ async def deleteRoom(request: Request):
         if day.get().get('bookings'):
             rooms = firestore_db.collection('rooms').stream()
             errors = 'Cannot delete room with bookings'
-            return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": None})
+            return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms})
         else:
             days[day_index].delete()
             del days[day_index]
@@ -577,11 +577,11 @@ async def viewRoom(request: Request, room: str):
     except ValueError:
         rooms = firestore_db.collection('rooms').stream()
         errors = 'The selected room is no longer available.'
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms, "all_bookings": None, "one_room_bookings": None, "filteredbookings": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms})
 
     for day in room_query.get("days"):
         if day.get().get("bookings"):
             '''Only add to bookings if the list of bookings associated with this day is not empty.'''
             bookings.append({day.get().get('date'): [item for item in day.get().get("bookings")]})
 
-    return templates.TemplateResponse('view-room.html', {"request": request, "user_token": user_token, "error_message": None, "user_info": user, "room": room_query, "bookings": bookings})
+    return templates.TemplateResponse('view-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "room": room_query, "bookings": bookings})
