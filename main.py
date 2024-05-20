@@ -52,7 +52,7 @@ async def root(request: Request):
     # Query firebase for the request token. An error message is set in case we want to output an error to 
     # the user in the template.
     id_token = request.cookies.get("token")
-    error_message = "No error here"
+    errors = None
     user_token = None
     user = None
 
@@ -60,13 +60,13 @@ async def root(request: Request):
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None,  "errors": errors, "user_info": None})
     
     user = getUser(user_token).get()
     rooms = []
     for room in firestore_db.collection('rooms').stream():
         rooms.append(room)
-    return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "error_message": error_message, "user_info": user, "rooms_list": rooms})
+    return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms})
 
 @app.get('/set-username', response_class=HTMLResponse)
 async def setUsername(request: Request):
