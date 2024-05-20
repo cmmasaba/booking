@@ -427,12 +427,13 @@ async def editBooking(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
+    errors = ''
 
     user_token = validateFirebaseToken(id_token)
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "error_message": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
     
     # get form data from the html page
     form = await request.form()
@@ -519,7 +520,7 @@ async def deleteRoom(request: Request):
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": None, "user_info": None})
+        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
     
     # get form data from the html page
     form = await request.form()
