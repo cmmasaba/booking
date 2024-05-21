@@ -158,6 +158,7 @@ async def bookRoom(request: Request):
     user_token = None
     user = None
     errors = None
+    min_time = ''
 
     user_token = validateFirebaseToken(id_token)
 
@@ -165,13 +166,21 @@ async def bookRoom(request: Request):
     if not user_token:
         return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
 
+    # find the minimum time that should be accepted from the user.
+    # if time now is past 7:00 am then provide current time as the minimum value to be accepted
+    # else provide 7:00 am as the default
+    if datetime.datetime.now().time() > datetime.time(7, 0, 0):
+        min_time = datetime.datetime.now().time().strftime("%H:%M")
+    else:
+        min_time = '07:00'
+
     user = getUser(user_token)
     # get the related rooms and store their names in a list
     rooms_list = []
     for room in firestore_db.collection("rooms").stream():
         rooms_list.append(room.get("name"))
     return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list,
-                                                         "min_date": datetime.datetime.today().strftime("%Y-%m-%d"), "min_time": datetime.datetime.now().time().strftime("%H:%M")})
+                                                         "min_date": datetime.datetime.today().strftime("%Y-%m-%d"), "min_time": min_time})
 
 @app.post("/book-room", response_class=RedirectResponse)
 async def bookRoom(request: Request):
@@ -403,6 +412,14 @@ async def editBooking(request: Request, booking_room: str, date: str, start: str
 
     rooms = [room.get("name") for room in firestore_db.collection("rooms").stream()]
 
+    # find the minimum time that should be accepted from the user.
+    # if time now is past 7:00 am then provide current time as the minimum value to be accepted
+    # else provide 7:00 am as the default
+    if datetime.datetime.now().time() > datetime.time(7, 0, 0):
+        min_time = datetime.datetime.now().time().strftime("%H:%M")
+    else:
+        min_time = '07:00'
+
     *_, room = firestore_db.collection("rooms").where(filter=FieldFilter('name', '==', booking_room)).get()
     for day in room.get('days'):
         if day.get().get('date') == date:
@@ -418,7 +435,7 @@ async def editBooking(request: Request, booking_room: str, date: str, start: str
                     }
                     del bookings[index]
                     day.update({'bookings': bookings})
-                    return templates.TemplateResponse('edit-booking.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "booking": booking, "rooms_list": rooms})
+                    return templates.TemplateResponse('edit-booking.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "booking": booking, "rooms_list": rooms, "min_time": min_time})
 
 @app.post('/edit-booking')
 async def editBooking(request: Request):
