@@ -152,8 +152,12 @@ async def addRoom(request: Request):
         return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
 
 @app.get("/book-room", response_class=HTMLResponse)
-async def bookRoom(request: Request):
-    """Returns a form for booking a room."""
+async def bookRoom(request: Request, room: str):
+    """Returns a form for booking a room.
+    
+    Args;
+        room: the room to be booked, an optional argument.
+    """
     id_token = request.cookies.get("token")
     user_token = None
     user = None
@@ -177,8 +181,11 @@ async def bookRoom(request: Request):
     user = getUser(user_token)
     # get the related rooms and store their names in a list
     rooms_list = []
-    for room in firestore_db.collection("rooms").stream():
-        rooms_list.append(room.get("name"))
+    if room:
+        rooms_list.append(room)
+    else:
+        rooms_list = [room.get("name") for room in firestore_db.collection("rooms").stream()]
+
     return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list,
                                                          "min_date": datetime.datetime.today().strftime("%Y-%m-%d"), "min_time": min_time})
 
