@@ -52,13 +52,13 @@
                     <div class="row mb-3">
                         <label for="bookingStartTime" class="col-sm-2 col-form-label">Start Time</label>
                         <div class="col-sm-4">
-                          <input type="time" min="07:00" max="23:00" id="bookingStartTime" name="bookingStartTime" required>
+                          <input type="time" min="{{ min_time }}" max="23:00" id="bookingStartTime" name="bookingStartTime" required>
                         </div>
                     </div>
                     <div class="row mb-3">
                         <label for="bookingEndTime" class="col-sm-2 col-form-label">End Time</label>
                         <div class="col-sm-4">
-                          <input type="time" min="07:00" max="23:00" id="bookingEndTime" name="bookingEndTime" required>
+                          <input type="time" min="{{ min_time }}" max="23:00" id="bookingEndTime" name="bookingEndTime" required>
                         </div>
                     </div>
                     <div class="col-12" style="margin: 0 auto;">
