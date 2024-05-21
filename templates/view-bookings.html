@@ -22,6 +22,7 @@
                     <span style="font-style: italic;">Filter bookings by day, month or both</span>
                     <div>
                         <select id="roomName" class="col-sm-2" name="room" style="width: 200px;">
+                            <option value=""></option>
                             {% for room in rooms %}
                                 <option value="{{ room }}">{{ room }}</option>
                             {% endfor %}
