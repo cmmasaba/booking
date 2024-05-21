@@ -18,6 +18,11 @@
                         </svg>
                     </a>
                 </div>
+                <ul class="nav nav-tabs">
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-link" role="button" href="{{ url_for('bookRoom').include_query_params(room=room.get('name')) }}">Book Room</a>
+                    </li>
+                </ul>
             </header>
             <section id="rooms-details" style="margin-top: 30px;">
                 <h3>{{ room.get("name") }}</h3>
