@@ -327,8 +327,15 @@ async def filterByRoomAndDay(request: Request):
     
     # get form data from the html page
     form = await request.form()
-    date = form['date']
-    room = form['room']
+    try:
+        date = form['date']
+    except KeyError:
+        pass
+
+    try:
+        room = form['room']
+    except KeyError:
+        pass
 
     user = getUser(user_token).get()
 
