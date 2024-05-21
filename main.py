@@ -318,6 +318,8 @@ async def filterByRoomAndDay(request: Request):
     user_token = None
     user = None
     errors = ''
+    room = None
+    date = None
 
     user_token = validateFirebaseToken(id_token)
 
