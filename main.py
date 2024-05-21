@@ -341,6 +341,7 @@ async def filterByRoomAndDay(request: Request):
 
     user = getUser(user_token).get()
 
+    rooms = [room.get("name") for room in firestore_db.collection("rooms").stream()]
     bookings_list = []
     if date:
         for day in firestore_db.collection("days").where(filter=FieldFilter('date', '==', date)).stream():
@@ -360,7 +361,7 @@ async def filterByRoomAndDay(request: Request):
             for booking in day.get('bookings'):
                 if booking['user'] == user.id:
                     bookings_list.append(booking)
-    return templates.TemplateResponse('view-bookings.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "bookings": bookings_list})
+    return templates.TemplateResponse('view-bookings.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "bookings": bookings_list, "rooms": rooms})
 
 @app.post('/delete-booking')
 async def deleteBooking(request: Request):
