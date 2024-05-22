@@ -732,14 +732,13 @@ async def deleteRoom(request: Request):
     user = getUser(user_token)
 
     if form['user'] != user.id:
-        rooms = firestore_db.collection('rooms').stream()
         errors = 'Rooms can only be deleted by the person who created it.'
         context = dict(
             request=request,
             user_token=user_token,
             errors=errors,
             user_info=user,
-            rooms=rooms
+            rooms=[room.get("name") for room in user.get().get('rooms_list')]
         )
         return templates.TemplateResponse('main.html', context=context)
 
@@ -749,14 +748,13 @@ async def deleteRoom(request: Request):
     for day_index, day in enumerate(days):
         """Check if the room has bookings associated."""
         if day.get().get('bookings'):
-            rooms = firestore_db.collection('rooms').stream()
             errors = 'Cannot delete room with bookings'
             context = dict(
                 request=request,
                 user_token=user_token,
                 errors=errors,
                 user_info=user,
-                rooms=rooms
+                rooms=[room.get("name") for room in user.get().get('rooms_list')]
             )
             return templates.TemplateResponse('main.html', context=context)
         else:
