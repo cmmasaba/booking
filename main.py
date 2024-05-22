@@ -780,7 +780,13 @@ async def viewRoom(request: Request, room: str):
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
+        context = dict(
+            request=request,
+            user_token=None,
+            errors=errors,
+            user_info=None,
+        )
+        return templates.TemplateResponse('main.html', context=context)
 
     # get form data from the html page
     # form = await request.form()
@@ -792,11 +798,26 @@ async def viewRoom(request: Request, room: str):
     except ValueError:
         rooms = firestore_db.collection('rooms').stream()
         errors = 'The selected room is no longer available.'
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms})
+        context = dict(
+            request=request,
+            user_token=user_token,
+            errors=errors,
+            user_info=user,
+            rooms=rooms
+        )
+        return templates.TemplateResponse('main.html', context=context)
 
     for day in room_query.get("days"):
         if day.get().get("bookings"):
             '''Only add to bookings if the list of bookings associated with this day is not empty.'''
             bookings.append({day.get().get('date'): [item for item in day.get().get("bookings")]})
 
-    return templates.TemplateResponse('view-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "room": room_query, "bookings": bookings})
+    context = dict(
+        request=request,
+        user_token=user_token,
+        errors=errors,
+        user_info=user,
+        room=room_query,
+        bookings=bookings
+    )
+    return templates.TemplateResponse('view-room.html', context=context)
