@@ -48,13 +48,13 @@
                                 <button  class="nav-link btn btn-link" id="add-room">Add Room</button>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link btn btn-link" role="button" href="{{ url_for('bookRoom') }}">Book Room</a>
+                                <a class="nav-link btn btn-link" role="button" href="{{ url_for('bookRoom').include_query_params(room='') }}">Book Room</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link btn btn-link" role="button" href="{{ url_for('viewBookings') }}">View Bookings</a>
                             </li>
                         {% endif %}
-                        <li class="nav-item" style="margin-left: 800px;">
+                        <li class="nav-item" style="margin: 20px auto; margin-left: 800px;">
                             <button type="button" class="btn btn-danger btn-sm" id="sign-out" hidden="true">Sign Out</button>
                         </li>
                     </ul>
@@ -70,13 +70,13 @@
                         <h3>Available rooms:</h3>
 
                         <ul>
-                            {% for room in rooms_list %}
+                            {% for room in rooms %}
                                 <li style="margin: 5px auto;">
-                                    <a href="{{ url_for('viewRoom', room=room.get('name')) }}">{{ room.get("name") }}</a>
+                                    <a href="{{ url_for('viewRoom', room=room) }}">{{ room }}</a>
                                     <div class="btn-group" role="group">
                                         <form action="{{ url_for('deleteRoom') }}" method="post">
-                                            <input type="hidden" value="{{ room.get('name') }}" name="room">
-                                            <input type="hidden" value="{{ room.get('user_id') }}" name="user">
+                                            <input type="hidden" value="{{ room }}" name="room">
+                                            <input type="hidden" value="{{ room }}" name="user">
                                             <button class="btn btn-outline-danger btn-sm" type="submit" style="margin: 0 10px;">Delete</button>
                                         </form>
                                     </div>
