@@ -13,7 +13,13 @@ In the application it is possible to do the following:
 - HTML
 - CSS
 - Bootstrap
-- App Engine for hosting
 - GCP Firestore for storage
 - GCP Firebase for authentication
-- GCP Cloud Storage for image storage
+
+## Features
+- Adding a room, room names are guaranteed to be unique.
+- Deleting a room by the user who created it, a room with bookings cannot be deleted.
+- Making a booking on a room, bookings are guaranteed to not overlap with each other.
+- Listing bookings made by the user, filters like room name or date can be used.
+- Editing a booking by the user who created it.
+- Deleting a booking by the user who created it.
