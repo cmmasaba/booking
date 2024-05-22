@@ -247,7 +247,13 @@ async def bookRoom(request: Request):
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
+        context = dict(
+            request=request,
+            user_token=None,
+            errors=errors,
+            user_info=None
+        )
+        return templates.TemplateResponse('main.html', context=context)
     
     # get form data from the html page
     form = await request.form()
@@ -257,14 +263,28 @@ async def bookRoom(request: Request):
     if form["bookingStartTime"] >= form["bookingEndTime"]:
         rooms_list = [room.get("name") for room in rooms]
         errors = "Invalid start and end time selected"
-        return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
+        context = dict(
+            request=request,
+            user_token=None,
+            errors=errors,
+            user_info=None,
+            rooms=rooms_list
+        )
+        return templates.TemplateResponse('book-room.html', context=context)
     
     if datetime.date.fromisoformat(form['bookingDate']) == datetime.date.today():
         '''If booking date is today and booking time is past'''
         if datetime.time.fromisoformat(form['bookingStartTime']) < datetime.time.fromisoformat(datetime.datetime.now().time().isoformat(timespec='minutes')):
             rooms_list = [room.get("name") for room in rooms]
             errors = "Select a valid time"
-            return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
+            context = dict(
+                request=request,
+                user_token=None,
+                errors=errors,
+                user_info=None,
+                rooms=rooms_list
+            )
+            return templates.TemplateResponse('book-room.html', context=context)
 
     user = getUser(user_token)
 
@@ -273,7 +293,14 @@ async def bookRoom(request: Request):
     except ValueError:
         rooms_list = [room.get("name") for room in rooms]
         errors = "The selected room is no longer available"
-        return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
+        context = dict(
+            request=request,
+            user_token=None,
+            errors=errors,
+            user_info=None,
+            rooms=rooms_list
+        )
+        return templates.TemplateResponse('book-room.html', context=context)
 
     #  get the dates associated with the room
     dates = [day.get().get('date') for day in room_query.get('days')]
@@ -324,7 +351,14 @@ async def bookRoom(request: Request):
             if form["bookingEndTime"] > booking["from"] and form["bookingStartTime"] < booking["to"]:
                 rooms_list = [room.get("name") for room in rooms]
                 errors = f"The room is already booked in this time slot: {booking['name']}, {booking['date']}, {booking['room']}, from {booking['from']} to {booking['to']}"
-                return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
+                context = dict(
+                    request=request,
+                    user_token=None,
+                    errors=errors,
+                    user_info=None,
+                    rooms=rooms_list
+                )
+                return templates.TemplateResponse('book-room.html', context=context)
 
             room_booking = {
                 'name': form['eventName'],
