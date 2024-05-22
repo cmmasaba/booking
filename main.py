@@ -386,7 +386,13 @@ async def viewBookings(request: Request):
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
+        context = dict(
+            request=request,
+            user_token=None,
+            errors=errors,
+            user_info=None,
+        )
+        return templates.TemplateResponse('main.html', context=context)
 
     user = getUser(user_token).get()
     rooms = [room.get("name") for room in firestore_db.collection("rooms").stream()]
@@ -396,7 +402,16 @@ async def viewBookings(request: Request):
         for booking in day.get('bookings'):
             if booking['user'] == user.id:
                 bookings_list.append(booking)
-    return templates.TemplateResponse('view-bookings.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms": rooms, "bookings": bookings_list})
+
+    context = dict(
+        request=request,
+        user_token=user_token,
+        errors=errors,
+        user_info=user,
+        bookings=bookings_list,
+        rooms=rooms
+    )
+    return templates.TemplateResponse('view-bookings.html', context=context)
 
 @app.post('/view-bookings')
 async def filterByRoomAndDay(request: Request):
