@@ -1,6 +1,6 @@
 # Room Booking Service
 This application is a service for scheduling rooms for use. There a numerous rooms and users. <br>
-Due to the potential risk of ocerlap in bookings made on a room, the application does validation each time a booking is made to prevent double booking.<br>
+Due to the potential risk of overlap in bookings made on a room, the application does validation each time a booking is made to prevent double booking.<br>
 
 
 ## Tech Stacks used
