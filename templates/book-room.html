@@ -38,7 +38,7 @@
                         <label for="roomName" class="col-sm-2 col-form-label">Room Name</label>
                         <select id="roomName" class="form-select form-select-sm" name="roomName" required style="width: 300px;">
                             <option selected>Select from available rooms</option>
-                            {% for room in rooms_list %}
+                            {% for room in rooms %}
                                 <option value="{{ room }}">{{ room }}</option>
                             {% endfor %}
                         </select>
