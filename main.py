@@ -181,6 +181,12 @@ async def addRoom(request: Request):
         return RedirectResponse('/', status.HTTP_302_FOUND)
     else:
         errors = "A room with that name already exists"
+        context = dict(
+            request=request,
+            user_token=user_token,
+            errors=errors,
+            user_info=user
+        )
         return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
 
 @app.get("/book-room", response_class=HTMLResponse)
