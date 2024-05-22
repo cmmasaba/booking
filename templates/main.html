@@ -70,7 +70,7 @@
                         <h3>Available rooms:</h3>
 
                         <ul>
-                            {% for room in rooms_list %}
+                            {% for room in rooms %}
                                 <li style="margin: 5px auto;">
                                     <a href="{{ url_for('viewRoom', room=room) }}">{{ room }}</a>
                                     <div class="btn-group" role="group">
