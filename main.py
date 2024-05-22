@@ -713,7 +713,13 @@ async def deleteRoom(request: Request):
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
+        context = dict(
+            request=request,
+            user_token=None,
+            errors=errors,
+            user_info=None,
+        )
+        return templates.TemplateResponse('main.html', context=context)
     
     # get form data from the html page
     form = await request.form()
@@ -723,7 +729,14 @@ async def deleteRoom(request: Request):
     if form['user'] != user.id:
         rooms = firestore_db.collection('rooms').stream()
         errors = 'Rooms can only be deleted by the person who created it.'
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms})
+        context = dict(
+            request=request,
+            user_token=user_token,
+            errors=errors,
+            user_info=user,
+            rooms=rooms
+        )
+        return templates.TemplateResponse('main.html', context=context)
 
     *_, room_query = firestore_db.collection('rooms').where(filter=FieldFilter('name', '==', form['room'])).where(filter=FieldFilter('user_id', '==', form['user'])).get()
     days = room_query.get('days')
@@ -733,7 +746,14 @@ async def deleteRoom(request: Request):
         if day.get().get('bookings'):
             rooms = firestore_db.collection('rooms').stream()
             errors = 'Cannot delete room with bookings'
-            return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms})
+            context = dict(
+                request=request,
+                user_token=user_token,
+                errors=errors,
+                user_info=user,
+                rooms=rooms
+            )
+            return templates.TemplateResponse('main.html', context=context)
         else:
             days[day_index].delete()
             del days[day_index]
