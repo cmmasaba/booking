@@ -166,9 +166,7 @@ async def addRoom(request: Request):
     
     # rooms are linked to users via keys. Get list of rooms for that user, add the new room to list, then update the list under user
     rooms = user.get().get('rooms_list')
-    rooms_list = []
-    for room in firestore_db.collection('rooms').stream():
-        rooms_list.append(room.get("name"))
+    rooms_list = [room.get("name") for room in firestore_db.collection('rooms').stream()]
     
     if form["roomName"] not in rooms_list:
         # create a transaction object and the document reference object, then set the data and commit to save
@@ -185,9 +183,10 @@ async def addRoom(request: Request):
             request=request,
             user_token=user_token,
             errors=errors,
-            user_info=user
+            user_info=user,
+            rooms=[room.get("name") for room in user.get().get('rooms_list')]
         )
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
+        return templates.TemplateResponse('main.html', context=context)
 
 @app.get("/book-room", response_class=HTMLResponse)
 async def bookRoom(request: Request, room: str):
