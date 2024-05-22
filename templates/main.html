@@ -72,11 +72,11 @@
                         <ul>
                             {% for room in rooms_list %}
                                 <li style="margin: 5px auto;">
-                                    <a href="{{ url_for('viewRoom', room=room.get('name')) }}">{{ room.get("name") }}</a>
+                                    <a href="{{ url_for('viewRoom', room=room) }}">{{ room }}</a>
                                     <div class="btn-group" role="group">
                                         <form action="{{ url_for('deleteRoom') }}" method="post">
-                                            <input type="hidden" value="{{ room.get('name') }}" name="room">
-                                            <input type="hidden" value="{{ room.get('user_id') }}" name="user">
+                                            <input type="hidden" value="{{ room }}" name="room">
+                                            <input type="hidden" value="{{ room }}" name="user">
                                             <button class="btn btn-outline-danger btn-sm" type="submit" style="margin: 0 10px;">Delete</button>
                                         </form>
                                     </div>
