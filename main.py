@@ -63,9 +63,7 @@ async def root(request: Request):
         return templates.TemplateResponse('main.html', {"request": request, "user_token": None,  "errors": errors, "user_info": None})
     
     user = getUser(user_token).get()
-    rooms = []
-    for room in firestore_db.collection('rooms').stream():
-        rooms.append(room)
+    rooms = [room for room in firestore_db.collection('rooms').stream()]
     return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms})
 
 @app.get('/set-username', response_class=HTMLResponse)
