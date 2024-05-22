@@ -60,10 +60,23 @@ async def root(request: Request):
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None,  "errors": errors, "user_info": None})
+        context = dict(
+            request=request,
+            user_token=None,
+            errors=errors,
+            user_info=None
+        )
+        return templates.TemplateResponse('main.html', context=context)
     
     user = getUser(user_token).get()
     rooms = [room.get("name") for room in firestore_db.collection('rooms').stream()]
+    context = dict(
+        request=request,
+        user_token=None,
+        errors=errors,
+        user_info=None,
+        rooms=rooms
+    )
     return templates.TemplateResponse('main.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms})
 
 @app.get('/set-username', response_class=HTMLResponse)
