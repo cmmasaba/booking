@@ -799,14 +799,13 @@ async def viewRoom(request: Request, room: str):
     try:
         *_, room_query = firestore_db.collection('rooms').where(filter=FieldFilter('name', '==', room)).get()
     except ValueError:
-        rooms = firestore_db.collection('rooms').stream()
         errors = 'The selected room is no longer available.'
         context = dict(
             request=request,
             user_token=user_token,
             errors=errors,
             user_info=user,
-            rooms=rooms
+            rooms=[room.get("name") for room in user.get().get('rooms_list')]
         )
         return templates.TemplateResponse('main.html', context=context)
 
