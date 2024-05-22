@@ -643,7 +643,14 @@ async def editBooking(request: Request):
     except ValueError:
         rooms_list = [room.get("name") for room in rooms]
         errors = "The selected room is no longer available"
-        return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
+        context = dict(
+            request=request,
+            user_token=user_token,
+            errors=errors,
+            user_info=user,
+            rooms=rooms_list
+        )
+        return templates.TemplateResponse('book-room.html', context=context)
 
     # validation for day and bookings
     dates = [day.get().get('date') for day in room_query.get('days')]
@@ -672,7 +679,14 @@ async def editBooking(request: Request):
             if form["bookingEndTime"] > booking["from"] and form["bookingStartTime"] < booking["to"]:
                 rooms_list = [room.get("name") for room in rooms]
                 errors = f"The room is already booked in this time slot: {booking['name']}, {booking['date']}, {booking['room']}, from {booking['from']} to {booking['to']}"
-                return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list})
+                context = dict(
+                    request=request,
+                    user_token=user_token,
+                    errors=errors,
+                    user_info=user,
+                    rooms=rooms_list
+                )
+                return templates.TemplateResponse('book-room.html', context=context)
 
         room_booking = {
             'name': form['eventName'],
