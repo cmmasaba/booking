@@ -91,18 +91,24 @@ async def setUsername(request: Request):
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
+        context = dict(
+            request=request,
+            user_token=None,
+            errors=errors,
+            user_info=None
+        )
+        return templates.TemplateResponse('main.html', context=context)
     
     user = getUser(user_token).get()
 
-    context_dict = dict(
+    context = dict(
         request=request,
         user_token=user_token,
         errors=errors,
         user_info=user,
     )
 
-    return templates.TemplateResponse('set-username.html', context=context_dict)
+    return templates.TemplateResponse('set-username.html', context=context)
 
 @app.post('/set-username', response_class=HTMLResponse)
 async def setUsername(request: Request):
@@ -119,9 +125,17 @@ async def setUsername(request: Request):
     form = await request.form()
 
     user_exists = firestore_db.collection("users").where(filter=FieldFilter('username', '==', form['username'])).get()
+    
     if user_exists:
         errors = 'This username is already taken.'
-        return templates.TemplateResponse('set-username.html', {"request": request, "user_token": None, "errors": errors, "user_info": None,})
+        context = dict(
+            request=request,
+            user_token=None,
+            errors=errors,
+            user_info=None
+        )
+        return templates.TemplateResponse('set-username.html', context=context)
+    
     firestore_db.collection('users').document(user_token['user_id']).update({"username": form["username"]})
     return RedirectResponse("/", status_code=status.HTTP_302_FOUND)
 
@@ -137,12 +151,19 @@ async def addRoom(request: Request):
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
+        context = dict(
+            request=request,
+            user_token=None,
+            errors=errors,
+            user_info=None
+        )
+        return templates.TemplateResponse('main.html', context=context)
     
     # get form data from the html page
     form = await request.form()
 
     user = getUser(user_token)
+    
     # rooms are linked to users via keys. Get list of rooms for that user, add the new room to list, then update the list under user
     rooms = user.get().get('rooms_list')
     rooms_list = []
