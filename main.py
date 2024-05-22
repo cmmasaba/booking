@@ -200,7 +200,13 @@ async def bookRoom(request: Request, room: str):
 
     # Validate user token - check if we have a valid firebase login if not return the template with empty data as we will show the login box
     if not user_token:
-        return templates.TemplateResponse('main.html', {"request": request, "user_token": None, "errors": errors, "user_info": None})
+        context = dict(
+            request=request,
+            user_token=None,
+            errors=errors,
+            user_info=None
+        )
+        return templates.TemplateResponse('main.html', context=context)
 
     # find the minimum time that should be accepted from the user.
     # if time now is past 7:00 am then provide current time as the minimum value to be accepted
@@ -212,14 +218,22 @@ async def bookRoom(request: Request, room: str):
 
     user = getUser(user_token)
     # get the related rooms and store their names in a list
-    rooms_list = []
+    rooms = []
     if room:
-        rooms_list.append(room)
+        rooms.append(room)
     else:
-        rooms_list = [room.get("name") for room in firestore_db.collection("rooms").stream()]
+        rooms = [room.get("name") for room in firestore_db.collection("rooms").stream()]
 
-    return templates.TemplateResponse('book-room.html', {"request": request, "user_token": user_token, "errors": errors, "user_info": user, "rooms_list": rooms_list,
-                                                         "min_date": datetime.datetime.today().strftime("%Y-%m-%d"), "min_time": min_time})
+    context = dict(
+        request=request,
+        user_token=user_token,
+        errors=errors,
+        user_info=user,
+        rooms=rooms,
+        min_date=datetime.datetime.today().strftime("%Y-%m-%d"),
+        min_time=min_time,
+    )
+    return templates.TemplateResponse('book-room.html', context=context)
 
 @app.post("/book-room", response_class=RedirectResponse)
 async def bookRoom(request: Request):
