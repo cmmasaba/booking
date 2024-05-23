@@ -300,9 +300,9 @@ async def bookRoom(request: Request):
         errors = "The selected room is no longer available"
         context = dict(
             request=request,
-            user_token=None,
+            user_token=user_token,
             errors=errors,
-            user_info=None,
+            user_info=user,
             rooms=rooms_list
         )
         return templates.TemplateResponse('book-room.html', context=context)
