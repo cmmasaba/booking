@@ -358,9 +358,9 @@ async def bookRoom(request: Request):
                 errors = f"The room is already booked in this time slot: {booking['name']}, {booking['date']}, {booking['room']}, from {booking['from']} to {booking['to']}"
                 context = dict(
                     request=request,
-                    user_token=None,
+                    user_token=user_token,
                     errors=errors,
-                    user_info=None,
+                    user_info=user,
                     rooms=rooms_list
                 )
                 return templates.TemplateResponse('book-room.html', context=context)
