@@ -385,7 +385,7 @@ async def viewBookings(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = None
+    errors = str | None
 
     user_token = validateFirebaseToken(id_token)
 
