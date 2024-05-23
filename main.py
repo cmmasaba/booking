@@ -535,7 +535,7 @@ async def editBooking(request: Request, booking_room: str, date: str, start: str
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = ''
+    errors: str | None = None
 
     user_token = validateFirebaseToken(id_token)
 
