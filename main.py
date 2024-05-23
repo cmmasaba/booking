@@ -712,7 +712,7 @@ async def deleteRoom(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = ''
+    errors: str | None = None
 
     user_token = validateFirebaseToken(id_token)
 
