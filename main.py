@@ -424,7 +424,7 @@ async def filterByRoomAndDay(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = None
+    errors: str | None = None
     room = None
     date = None
 
