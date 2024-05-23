@@ -198,7 +198,7 @@ async def bookRoom(request: Request, room: str):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = str | None
+    errors: str | None = None
     min_time = ''
 
     user_token = validateFirebaseToken(id_token)
@@ -246,7 +246,7 @@ async def bookRoom(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = str | None
+    errors: str | None = None
 
     user_token = validateFirebaseToken(id_token)
 
@@ -385,7 +385,7 @@ async def viewBookings(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = str | None
+    errors: str | None = None
 
     user_token = validateFirebaseToken(id_token)
 
