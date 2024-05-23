@@ -153,9 +153,9 @@ async def addRoom(request: Request):
     if not user_token:
         context = dict(
             request=request,
-            user_token=None,
+            user_token=user_token,
             errors=errors,
-            user_info=None
+            user_info=user,
         )
         return templates.TemplateResponse('main.html', context=context)
     
@@ -207,9 +207,9 @@ async def bookRoom(request: Request, room: str):
     if not user_token:
         context = dict(
             request=request,
-            user_token=None,
+            user_token=user_token,
             errors=errors,
-            user_info=None
+            user_info=user,
         )
         return templates.TemplateResponse('main.html', context=context)
 
