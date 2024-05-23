@@ -52,7 +52,7 @@ async def root(request: Request):
     # Query firebase for the request token. An error message is set in case we want to output an error to 
     # the user in the template.
     id_token = request.cookies.get("token")
-    errors = None
+    errors = str | None
     user_token = None
     user = None
 
@@ -83,7 +83,7 @@ async def root(request: Request):
 async def setUsername(request: Request):
     """Route (GET) for setting the username when a user logs in for the first time."""
     id_token = request.cookies.get("token")
-    errors = None
+    errors = str | None
     user_token = None
     user = None
 
@@ -145,7 +145,7 @@ async def addRoom(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = None
+    errors = str | None
 
     user_token = validateFirebaseToken(id_token)
 
@@ -198,7 +198,7 @@ async def bookRoom(request: Request, room: str):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = None
+    errors = str | None
     min_time = ''
 
     user_token = validateFirebaseToken(id_token)
@@ -246,7 +246,7 @@ async def bookRoom(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = None
+    errors = str | None
 
     user_token = validateFirebaseToken(id_token)
 
