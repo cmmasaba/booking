@@ -207,9 +207,9 @@ async def bookRoom(request: Request, room: str):
     if not user_token:
         context = dict(
             request=request,
-            user_token=user_token,
+            user_token=None,
             errors=errors,
-            user_info=user,
+            user_info=None
         )
         return templates.TemplateResponse('main.html', context=context)
 
