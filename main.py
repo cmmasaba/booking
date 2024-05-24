@@ -52,7 +52,7 @@ async def root(request: Request):
     # Query firebase for the request token. An error message is set in case we want to output an error to 
     # the user in the template.
     id_token = request.cookies.get("token")
-    errors = None
+    errors: str | None = None
     user_token = None
     user = None
 
@@ -83,7 +83,7 @@ async def root(request: Request):
 async def setUsername(request: Request):
     """Route (GET) for setting the username when a user logs in for the first time."""
     id_token = request.cookies.get("token")
-    errors = None
+    errors: str | None = None
     user_token = None
     user = None
 
@@ -118,7 +118,7 @@ async def setUsername(request: Request):
     """
     id_token = request.cookies.get("token")
     user_token = None
-    errors = None
+    errors: str | None = None
 
     user_token = validateFirebaseToken(id_token)
 
@@ -145,7 +145,7 @@ async def addRoom(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = None
+    errors: str | None = None
 
     user_token = validateFirebaseToken(id_token)
 
@@ -198,7 +198,7 @@ async def bookRoom(request: Request, room: str):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = None
+    errors: str | None = None
     min_time = ''
 
     user_token = validateFirebaseToken(id_token)
@@ -246,7 +246,7 @@ async def bookRoom(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = None
+    errors: str | None = None
 
     user_token = validateFirebaseToken(id_token)
 
@@ -270,9 +270,9 @@ async def bookRoom(request: Request):
         errors = "Invalid start and end time selected"
         context = dict(
             request=request,
-            user_token=None,
+            user_token=user_token,
             errors=errors,
-            user_info=None,
+            user_info=user,
             rooms=rooms_list
         )
         return templates.TemplateResponse('book-room.html', context=context)
@@ -284,9 +284,9 @@ async def bookRoom(request: Request):
             errors = "Select a valid time"
             context = dict(
                 request=request,
-                user_token=None,
+                user_token=user_token,
                 errors=errors,
-                user_info=None,
+                user_info=user,
                 rooms=rooms_list
             )
             return templates.TemplateResponse('book-room.html', context=context)
@@ -300,9 +300,9 @@ async def bookRoom(request: Request):
         errors = "The selected room is no longer available"
         context = dict(
             request=request,
-            user_token=None,
+            user_token=user_token,
             errors=errors,
-            user_info=None,
+            user_info=user,
             rooms=rooms_list
         )
         return templates.TemplateResponse('book-room.html', context=context)
@@ -358,9 +358,9 @@ async def bookRoom(request: Request):
                 errors = f"The room is already booked in this time slot: {booking['name']}, {booking['date']}, {booking['room']}, from {booking['from']} to {booking['to']}"
                 context = dict(
                     request=request,
-                    user_token=None,
+                    user_token=user_token,
                     errors=errors,
-                    user_info=None,
+                    user_info=user,
                     rooms=rooms_list
                 )
                 return templates.TemplateResponse('book-room.html', context=context)
@@ -385,7 +385,7 @@ async def viewBookings(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = None
+    errors: str | None = None
 
     user_token = validateFirebaseToken(id_token)
 
@@ -424,7 +424,7 @@ async def filterByRoomAndDay(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = None
+    errors: str | None = None
     room = None
     date = None
 
@@ -491,7 +491,7 @@ async def deleteBooking(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = ''
+    errors: str | None = None
 
     user_token = validateFirebaseToken(id_token)
 
@@ -535,7 +535,7 @@ async def editBooking(request: Request, booking_room: str, date: str, start: str
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = ''
+    errors: str | None = None
 
     user_token = validateFirebaseToken(id_token)
 
@@ -596,7 +596,7 @@ async def editBooking(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = ''
+    errors: str | None = None
 
     user_token = validateFirebaseToken(id_token)
 
@@ -712,7 +712,7 @@ async def deleteRoom(request: Request):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = ''
+    errors: str | None = None
 
     user_token = validateFirebaseToken(id_token)
 
@@ -777,7 +777,7 @@ async def viewRoom(request: Request, room: str):
     id_token = request.cookies.get("token")
     user_token = None
     user = None
-    errors = ''
+    errors: str | None = None
 
     user_token = validateFirebaseToken(id_token)
 
